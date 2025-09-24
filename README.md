@@ -21,16 +21,40 @@ OMATrust is a decentralized verification protocol that enables developers, audit
 
 ## Repository Ecosystem
 
-The OMATrust ecosystem spans multiple specialized repositories:
+OMATrust follows a **modular architecture** where each repository serves a specific function:
 
-| Repository | Description | Status |
-|------------|-------------|---------|
-| **[omatrust-registry-contracts](https://github.com/oma3dao/app-registry-evm-solidity)** | Core registry smart contracts | Active |
-| **[omatrust-reputation-schemas](https://github.com/oma3dao/rep-attestation-tools-evm-solidity)** | Attestation schemas and tools | Active |
-| **[omatrust-registry-frontend](https://github.com/oma3dao/app-registry-frontend)** | Registry web interface | Active |
-| **[omatrust-reputation-frontend](https://github.com/oma3dao/rep-attestation-frontend)** | Reputation and reviews interface | Active |
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        OMATrust Repositories                    │
+├─────────────────────────────────────────────────────────────────┤
+│  Documentation Layer                                            │
+│  └── omatrust-docs (this repo)                                  │
+├─────────────────────────────────────────────────────────────────┤
+│  Frontend Applications                                          │
+│  ├── app-registry-frontend                                      │
+│  └── rep-attestation-frontend                                   │
+├─────────────────────────────────────────────────────────────────┤
+│  Smart Contracts & Infrastructure                               │
+│  ├── app-registry-evm-solidity                                  │
+│  └── rep-attestation-tools-evm-solidity                         │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-> See [repositories.md](./repositories.md) for detailed descriptions and relationships.
+| Repository | Purpose | Links To |
+|------------|---------|----------|
+| **[app-registry-evm-solidity](https://github.com/oma3dao/app-registry-evm-solidity)** | Smart contracts for app registration and tokenization | Used by registry frontend |
+| **[rep-attestation-tools-evm-solidity](https://github.com/oma3dao/rep-attestation-tools-evm-solidity)** | Attestation schemas and tools for reputation system | Used by reputation frontend |
+| **[app-registry-frontend](https://github.com/oma3dao/app-registry-frontend)** | Web interface for registering applications | Calls registry contracts |
+| **[rep-attestation-frontend](https://github.com/oma3dao/rep-attestation-frontend)** | Web interface for submitting and viewing attestations | Uses attestation schemas |
+
+### How They Work Together
+
+**Registration**: Developers use the `app-registry-frontend` to register applications, which creates tokens via `app-registry-evm-solidity` contracts.
+
+**Reputation**: Users and auditors submit reviews/certifications through `rep-attestation-frontend`, using schemas from `rep-attestation-tools-evm-solidity`.
+
+**Verification**: Applications can query both systems to display trust signals to users.
+
 
 ## Getting Started
 

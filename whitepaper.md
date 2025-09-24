@@ -1,6 +1,6 @@
 # **OMATrust Whitepaper**
 
-**Version 1.0** | **September 2025** | **OMA3 Consortium**
+**Version 1.0** | **September 2025** | **OMA3**
 
 ---
 

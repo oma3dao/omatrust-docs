@@ -1,243 +1,29 @@
 # OMATrust Specification
 
-## Decentralized and Permissionless Trust Layer for the Open Internet
+**Decentralized and Permissionless Trust Layer for the Open Internet**
 
-[**Executive Summary	4**](#executive-summary)
-
-[**Introduction	5**](#introduction)
-
-[**Scope	5**](#scope)
-
-[In-Scope	5](#in-scope)
-
-[Out-of-Scope	5](#out-of-scope)
-
-[**References	5**](#references)
-
-[**Definitions	5**](#definitions)
-
-[Abbreviations	5](#abbreviations)
-
-[Definitions	6](#heading=)
-
-[**Specification	6**](#specification)
-
-[OMATrust is comprised of three actors mentioned above:	6](#app-registry-contract)
-
-[● Application Registry Contract	6](#app-registry-contract)
-
-[● Reputation Service	6](#reputation-service)
-
-[App Registry Contract	7](#app-registry-contract)
-
-[JSON Format: versionHistory	8](#json-format:-versionhistory)
-
-[JSON Format: dataUrl	9](#json-format:-dataurl)
-
-[Canonicalization and Hashing	11](#canonicalization-and-hashing)
-
-[● Parsing JSON objects MUST conform to RFC 8259 (ECMA‑404). Inputs that contain comments, single quotes, NaN/Infinity, trailing commas, or other non‑standard extensions MUST be rejected.	11](#parsing-json-objects-must-conform-to-rfc-8259-\(ecma‑404\).-inputs-that-contain-comments,-single-quotes,-nan/infinity,-trailing-commas,-or-other-non‑standard-extensions-must-be-rejected.)
-
-[● To ensure deterministic dataHash values across implementations, Clients MUST fetch dataUrl, canonicalize the returned JSON using JCS (RFC 8785), compute the digest of the the resulting UTF‑8 bytes using the on-chain dataHashAlgorithm, and compare it to the on-chain dataHash value. If they differ, clients MUST treat the manifest as unverified and SHOULD display a warning or hide the app according to UI policy.	11](#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-\(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures\)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.)
-
-[● Canonicalization (JCS, RFC 8785\) summary:	11](#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-\(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures\)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.)
-
-[○ Object member names are sorted lexicographically (by Unicode code point).	11](#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-\(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures\)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.)
-
-[○ Objects are emitted in sorted order; array element order is preserved.	11](#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-\(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures\)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.)
-
-[○ Numbers are emitted in their minimal form (no leading zeros, no superfluous decimal points or exponents; −0 normalizes to 0).	11](#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-\(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures\)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.)
-
-[○ Strings are escaped exactly as specified in RFC 8785; no additional Unicode normalization is applied.	11](#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-\(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures\)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.)
-
-[○ All insignificant whitespace is removed.	11](#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-\(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures\)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.)
-
-[● Hashing:	11](#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-\(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures\)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.)
-
-[○ dataHash \= HASH(canonicalUtf8Bytes) where HASH ∈ { sha256, keccak256 }.	11](#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-\(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures\)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.)
-
-[○ The algorithm used MUST be recorded in dataHashAlgorithm and the digest MUST be encoded as a 0x‑prefixed lowercase hex string.	11](#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-\(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures\)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.)
-
-[● Guidance:	11](#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-\(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures\)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.)
-
-[○ Prefer integers and strings over floats where precision matters to avoid cross‑runtime number formatting issues.	11](#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-\(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures\)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.)
-
-[○ Implementers SHOULD publish golden test vectors for canonicalization+hashing (covering numbers, escape sequences, object key ordering, and nested structures) and verify cross‑runtime determinism to ensure consistency across implementations. Clients are encouraged to use these vectors to validate their consumption of OMATrust data. See Appendix D for example test vectors to guide implementation.	11](#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-\(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures\)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.)
-
-[JSON Format: dataUrl.platforms	11](#json-format:-dataurl.platforms)
-
-[JSON Format: dataUrl.endpoint	12](#json-format:-dataurl.endpoint)
-
-[JSON Format: dataUrl.payments	13](#json-format:-dataurl.payments)
-
-[JSON Format: dataUrl.mcp	13](#json-format:-dataurl.mcp)
-
-[JSON Format: dataUrl.artifacts	15](#json-format:-dataurl.artifacts)
-
-[Field Confirmation	17](#application-ownership-confirmation)
-
-[Control Policy	19](#control-policy)
-
-[Control Policy Justification	20](#control-policy-justification)
-
-[Optional Soulbound Mode	21](#optional-soulbound-mode)
-
-[Indexing Requirements	21](#indexing-requirements)
-
-[App Registry API	22](#app-registry-api)
-
-[Ownership Resolver Contract	25](#ownership-resolver-contract)
-
-[DID ownership is not proactively verified at registration time. Instead, OMA3 uses a dedicated Resolver contract to arbitrate conflicts when multiple parties attempt to claim the same DID.	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[Design principles	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[● Keep the App Registry minimal and immutable.	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[● Push conflict rules into a pluggable Resolver contract that can be swapped by governance.	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[● Allow policies (challenge windows, quorum rules, attester sets) to evolve without redeploying the Registry.	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[Process	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[1\. First Claim: The first claimer of a DID mints automatically to streamline onboarding.	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[2\. Challenge: A challenger may attempt to rebind a DID by minting the same DID/version combination. The Resolver compares the challenger’s attestation score against the incumbent’s.	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[○ Scores are based on the count of valid, non-revoked attestations from an approved list of attesters.	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[○ Only attestations older than a global maturation delay (e.g., 72h) count toward scores, creating a rolling challenge window.	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[3\. Resolution: If challenger’s matured score strictly exceeds incumbent’s, ownership flips and a new mapping is written to the Deduplicator. Otherwise, the challenge fails and a ConflictAttempted event is emitted.	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[4\. Epochs: Each DID has its own counter. Flipping voids prior attestations automatically.	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[Attestation model	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[● Attestations are EIP-712 signed by approved attesters (starting with the OMA3 verification server).	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[● Each (attester, did, epoch, claimer) has only one active attestation, which can be updated or revoked.	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[● Events record every AttestationUpdated, ConflictAttempted, and OwnershipChanged.	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[Notification	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[● Incumbents receive notice via events; off-chain watchers (or EPNS relays) subscribe to these logs.	25](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[● An optional notifier callback can be registered by incumbents for on-chain hooks.	26](#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.)
-
-[This model ensures predictable resolution without upgradeable registries, while allowing flexible evolution of conflict policy.	26](#this-model-ensures-predictable-resolution-without-upgradeable-registries,-while-allowing-flexible-evolution-of-conflict-policy.)
-
-[Reputation Service	26](#reputation-service-1)
-
-[A permissionless app registry without third party attestations leaves users open to fraud.  Adversaries can register malicious, fraudulent, misleading, and counterfeit apps.  To address this problem the Spatial Store leverages the OIF’s robust reputation system.	26](#a-permissionless-app-registry-without-third-party-attestations-leaves-users-open-to-fraud.-adversaries-can-register-malicious,-fraudulent,-misleading,-and-counterfeit-apps.-to-address-this-problem-omatrust-leverages-the-reputation-system.)
-
-[OIF Reputation System	26](#omatrust-reputation-system)
-
-[DID → Index Address Mapping (Normative)	27](#did-→-index-address-mapping-and-searching)
-
-[To enable efficient, per-DID discovery anywhere a Solidity \`address\` is used as an index key (including EAS \`recipient\`), define a deterministic mapping from a DID to an \*\*Index Address\*\*.	27](#query-eas-for-attestations-with-recipient-=-indexaddress\(did\)-and-a-given-schema-uid-\(e.g.,-oma3userreview@1\).)
-
-[\*\*MUST:\*\* For any DID \`did\`, compute:	27](#query-eas-for-attestations-with-recipient-=-indexaddress\(did\)-and-a-given-schema-uid-\(e.g.,-oma3userreview@1\).)
-
-[indexAddress \= address(uint160(uint256(	27](#query-eas-for-attestations-with-recipient-=-indexaddress\(did\)-and-a-given-schema-uid-\(e.g.,-oma3userreview@1\).)
-
-[keccak256("DID:Solidity:Address:v1:" || didHash)	27](#query-eas-for-attestations-with-recipient-=-indexaddress\(did\)-and-a-given-schema-uid-\(e.g.,-oma3userreview@1\).)
-
-[)));	27](#query-eas-for-attestations-with-recipient-=-indexaddress\(did\)-and-a-given-schema-uid-\(e.g.,-oma3userreview@1\).)
-
-[Where:	27](#query-eas-for-attestations-with-recipient-=-indexaddress\(did\)-and-a-given-schema-uid-\(e.g.,-oma3userreview@1\).)
-
-[\- \`didHash \= keccak256(canonicalizeDID(did))\`.	27](#query-eas-for-attestations-with-recipient-=-indexaddress\(did\)-and-a-given-schema-uid-\(e.g.,-oma3userreview@1\).)
-
-[\- \`canonicalizeDID(did)\` follows the DID method’s normalization rules (e.g., for \`did:web\`: lowercase host, IDNA/punycode, preserve path, etc.). See the DID hashing appendix / DidLib reference.	27](#query-eas-for-attestations-with-recipient-=-indexaddress\(did\)-and-a-given-schema-uid-\(e.g.,-oma3userreview@1\).)
-
-[\*\*Notes & rationale:\*\*	27](#query-eas-for-attestations-with-recipient-=-indexaddress\(did\)-and-a-given-schema-uid-\(e.g.,-oma3userreview@1\).)
-
-[\- \*\*Domain separation & versioning:\*\* The ASCII prefix \`DID:Solidity:Address:v1:\` cleanly separates this mapping from any other hash→address scheme and allows future versions (e.g., \`…:v2:\`) without breaking old data.	27](#query-eas-for-attestations-with-recipient-=-indexaddress\(did\)-and-a-given-schema-uid-\(e.g.,-oma3userreview@1\).)
-
-[\- \*\*Portability:\*\* Works for EAS \`recipient\`, event partition keys, indexes in other contracts, or any off-chain index keyed by an Ethereum-style address.	27](#query-eas-for-attestations-with-recipient-=-indexaddress\(did\)-and-a-given-schema-uid-\(e.g.,-oma3userreview@1\).)
-
-[\- \*\*Semantics:\*\* The Index Address is an \*\*indexing label only\*\*. It does \*\*not\*\* imply control/ownership and MUST NOT be treated as a wallet.	27](#query-eas-for-attestations-with-recipient-=-indexaddress\(did\)-and-a-given-schema-uid-\(e.g.,-oma3userreview@1\).)
-
-[\- \*\*Collision risk:\*\* Negligible (≈ 1 / 2¹⁶⁰). The prefix prevents cross-protocol overlap.	27](#query-eas-for-attestations-with-recipient-=-indexaddress\(did\)-and-a-given-schema-uid-\(e.g.,-oma3userreview@1\).)
-
-[\*\*Client query pattern (example):\*\*	27](#query-eas-for-attestations-with-recipient-=-indexaddress\(did\)-and-a-given-schema-uid-\(e.g.,-oma3userreview@1\).)
-
-[For reviews about \`did\` in EAS, compute \`recipient \= indexAddress\` and filter by \`(schemaUID \= Oma3UserReview@1, recipient)\`. Include \`subjectDidHash\` (the same \`didHash\`) inside the EAS payload so UIs can cross-check \`recipient ↔ subjectDidHash\`.	27](#query-eas-for-attestations-with-recipient-=-indexaddress\(did\)-and-a-given-schema-uid-\(e.g.,-oma3userreview@1\).)
-
-[Linked Identifier Schema	27](#linked-identifier-schema)
-
-[Data URL Schema	29](#data-url-schema)
-
-[Why this is secure	30](#why-this-is-secure)
-
-[Manual review requirements	30](#manual-review-requirements)
-
-[Endorsement Schema	31](#endorsement-schema)
-
-[Certification Schema	31](#certification-schema)
-
-[User Review Schema	31](#user-review-schema)
-
-[App Store Guidance	32](#client-guidance)
-
-[**Change History	33**](#change-history)
-
-[**Appendix A — did:artifact (Provisional)	34**](#appendix-a-—-did:artifact-\(provisional\))
-
-[A.1 Overview	34](#a.1-overview)
-
-[A.2 Identifier Syntax	34](#a.2-identifier-syntax)
-
-[A.3 Computing artifactDid	34](#a.3-computing-artifactdid)
-
-[A.4 Verification (Client Requirements)	35](#a.4-verification-\(client-requirements\))
-
-[A.5 Data Model Integration (normative hooks)	35](#a.5-data-model-integration-\(normative-hooks\))
-
-[A.6 Policy (V1)	36](#a.6-policy-\(v1\))
-
-[A.7 Security Considerations	36](#a.7-security-considerations)
-
-[A.8 DID Index Address Helper	36](#a.8-did-index-address-helper)
-
-[A.9 Forthcoming Method Registration (informative)	37](#a.9-forthcoming-method-registration-\(informative\))
-
-[A.10 Examples (informative)	37](#a.10-examples-\(informative\))
-
-[Editor’s note (remove before publishing)	39](#editor’s-note-\(remove-before-publishing\))
-
-[W.1 Summary (design intent)	40](#w.1-summary-\(design-intent\))
-
-[W.2 Planned artifact shape (non-normative)	40](#w.2-planned-artifact-shape-\(non-normative\))
-
-[W.3 Planned verification algorithm (non-normative)	41](#w.3-planned-verification-algorithm-\(non-normative\))
-
-[W.4 Open items (track in issues)	41](#w.4-open-items-\(track-in-issues\))
-
-# Executive Summary {#executive-summary}
+# Executive Summary
 
 This document is a draft specification proposal for a decentralized and permissionless trust layer for the open internet.  OMATrust leverages the OMA3 Identity Framework (OIF) and has the following components:
 
 1. Registry- a registry of Applications that are identified by OIF DIDs  
 2. Attestation Framework- infrastructure for attestations on OIF DIDs, such as cybersecurity certifications.
 
-# Introduction {#introduction}
+# Introduction
 
 This specification is a response to the [OMA3 Spatial Store RFP](https://github.com/oma3dao/spatial-store-rfp) and references the [OMA3 Identity Framework specification document](https://docs.google.com/document/d/1tiPgSItVuKEzmzueF0Z6-N3yc3YSGvc1Fyii8nryuHY/edit?tab=t.0).  It also addresses the Metaverse Standards Forum Spatial Store [use case](https://docs.google.com/document/d/1V_6W_rLvk6jV8FaMSzXhQdJwWSoqoE6pAoxlS0HZcJg/edit?tab=t.0), incorporated by reference.
 
-# Scope {#scope}
+# Scope
 
-## In-Scope {#in-scope}
+## In-Scope
 
 This document aims to solve the following requirements and use cases described in the [Spatial Store RFP](https://docs.google.com/document/d/1NQUEvns5qLmq1w-9lLxOS4Wbr-n1wKupj__aoeikcPQ/).
 
-## Out-of-Scope {#out-of-scope}
+## Out-of-Scope
 
 Code repositories, tokenomics, business models, and storage implementations are out of scope for this document.
 
-# References {#references}
+# References
 
 IWPS Identity Specification Overview  
 Spatial Store RFP  
@@ -245,9 +31,9 @@ OMATrust Whitepaper
 DID Specification: [https://www.w3.org/TR/did-core](https://www.w3.org/TR/did-core/#terminology)  
 DID Spec Registries: [https://www.w3.org/TR/did-spec-registries/](https://www.w3.org/TR/did-spec-registries/)
 
-# Definitions {#definitions}
+# Definitions
 
-## Abbreviations {#abbreviations}
+## Abbreviations
 
 In the present document, the following abbreviations apply:
 
@@ -282,17 +68,15 @@ The following definitions are used within the present document. (Mostly reused f
 
 In addition to the above definitions all OMA3 specifications use requirements language as described in the [OMA3 working group process](https://github.com/oma3dao/working-group-process/blob/main/working-group-process.md).
 
-# Specification {#specification}
+# Specification
 
-## OMATrust is comprised of three actors mentioned above: {#app-registry-contract}
+OMATrust is comprised of three core components:
 
-##  {#app-registry-contract}
+## Application Registry Contract
 
-* ## Application Registry Contract {#app-registry-contract}
+## Ownership Resolver Contract
 
-* Ownership Resolver Contract
-
-* ## Reputation Service {#reputation-service}
+## Reputation Service
 
 The following applies to the whole document:
 
@@ -301,7 +85,7 @@ The following applies to the whole document:
 * “JSON” means a string in JSON format  
 * \[\] is meant to signify an array of whatever is inside the brackets.
 
-## App Registry Contract {#app-registry-contract}
+## App Registry Contract
 
 The Application Registry contract tokenizes applications on the blockchain as an NFT.  This document describes the specifications for this contract in a platform-agnostic manner.  
 
@@ -324,7 +108,7 @@ Every app registry NFT stores the following information associated with an appli
 
 Table 1: Application Registry Onchain DataMetadata.
 
-### JSON Format: *versionHistory* {#json-format:-versionhistory}
+### JSON Format: *versionHistory*
 
 The objects in the *versionHistory* array have the following fields:
 
@@ -334,7 +118,7 @@ The objects in the *versionHistory* array have the following fields:
 | minor | Int | Y |
 | patch | Int | Y |
 
-### JSON Format: *dataUrl* {#json-format:-dataurl}
+### JSON Format: *dataUrl*
 
 *dataUrl* points to an endpoint that returns a JSON object with offchain data.  The JSON object has the following top level fields depending on the value of the *type* field in the NFT contract:
 
@@ -365,39 +149,30 @@ The objects in the *versionHistory* array have the following fields:
 
 Table 2: Application offchain data.
 
-### Canonicalization and Hashing {#canonicalization-and-hashing}
+### Canonicalization and Hashing
 
-* ### Parsing JSON objects MUST conform to RFC 8259 (ECMA‑404). Inputs that contain comments, single quotes, NaN/Infinity, trailing commas, or other non‑standard extensions MUST be rejected. {#parsing-json-objects-must-conform-to-rfc-8259-(ecma‑404).-inputs-that-contain-comments,-single-quotes,-nan/infinity,-trailing-commas,-or-other-non‑standard-extensions-must-be-rejected.}
+* **Parsing JSON objects MUST conform to RFC 8259 (ECMA‑404).** Inputs that contain comments, single quotes, NaN/Infinity, trailing commas, or other non‑standard extensions MUST be rejected.
 
-* ### To ensure deterministic dataHash values across implementations, Clients MUST fetch dataUrl, canonicalize the returned JSON using JCS (RFC 8785), compute the digest of the the resulting UTF‑8 bytes using the on-chain dataHashAlgorithm, and compare it to the on-chain dataHash value. If they differ, clients MUST treat the manifest as unverified and SHOULD display a warning or hide the app according to UI policy. {#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.}
+* **To ensure deterministic dataHash values across implementations,** Clients MUST fetch dataUrl, canonicalize the returned JSON using JCS (RFC 8785), compute the digest of the the resulting UTF‑8 bytes using the on-chain dataHashAlgorithm, and compare it to the on-chain dataHash value. If they differ, clients MUST treat the manifest as unverified and SHOULD display a warning or hide the app according to UI policy.
 
-* ### Canonicalization (JCS, RFC 8785\) summary: {#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.}
+* **Canonicalization (JCS, RFC 8785) summary:**
+  * Object member names are sorted lexicographically (by Unicode code point).
+  * Objects are emitted in sorted order; array element order is preserved.
+  * Numbers are emitted in their minimal form (no leading zeros, no superfluous decimal points or exponents; −0 normalizes to 0).
+  * Strings are escaped exactly as specified in RFC 8785; no additional Unicode normalization is applied.
+  * All insignificant whitespace is removed.
 
-  * ### Object member names are sorted lexicographically (by Unicode code point). {#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.}
+* **Hashing:**
+  * `dataHash = HASH(canonicalUtf8Bytes)` where `HASH ∈ { sha256, keccak256 }`.
+  * The algorithm used MUST be recorded in `dataHashAlgorithm` and the digest MUST be encoded as a `0x`‑prefixed lowercase hex string.
 
-  * ### Objects are emitted in sorted order; array element order is preserved. {#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.}
-
-  * ### Numbers are emitted in their minimal form (no leading zeros, no superfluous decimal points or exponents; −0 normalizes to 0). {#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.}
-
-  * ### Strings are escaped exactly as specified in RFC 8785; no additional Unicode normalization is applied. {#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.}
-
-  * ### All insignificant whitespace is removed. {#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.}
-
-* ### Hashing: {#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.}
-
-  * ### dataHash \= HASH(canonicalUtf8Bytes) where HASH ∈ { sha256, keccak256 }. {#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.}
-
-  * ### The algorithm used MUST be recorded in dataHashAlgorithm and the digest MUST be encoded as a 0x‑prefixed lowercase hex string. {#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.}
-
-* ### Guidance: {#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.}
-
-  * ### Prefer integers and strings over floats where precision matters to avoid cross‑runtime number formatting issues. {#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.}
-
-  * ### Implementers SHOULD publish golden test vectors for canonicalization+hashing (covering numbers, escape sequences, object key ordering, and nested structures) and verify cross‑runtime determinism to ensure consistency across implementations. Clients are encouraged to use these vectors to validate their consumption of OMATrust data. See Appendix D for example test vectors to guide implementation. {#implementers-should-publish-golden-test-vectors-for-canonicalization+hashing-(covering-numbers,-escape-sequences,-object-key-ordering,-and-nested-structures)-and-verify-cross‑runtime-determinism-to-ensure-consistency-across-implementations.-clients-are-encouraged-to-use-these-vectors-to-validate-their-consumption-of-omatrust-data.-see-appendix-d-for-example-test-vectors-to-guide-implementation.}
+* **Guidance:**
+  * Prefer integers and strings over floats where precision matters to avoid cross‑runtime number formatting issues.
+  * Implementers SHOULD publish golden test vectors for canonicalization+hashing (covering numbers, escape sequences, object key ordering, and nested structures) and verify cross‑runtime determinism to ensure consistency across implementations. Clients are encouraged to use these vectors to validate their consumption of OMATrust data. See Appendix D for example test vectors to guide implementation.
 
 Note: Contracts do not validate JCS; they only store the algorithm \+ digest. JCS compliance and hash correctness are enforced off-chain by clients and indexers.
 
-### JSON Format: *dataUrl.platforms* {#json-format:-dataurl.platforms}
+### JSON Format: *dataUrl.platforms*
 
 If *interfaces* \= 0, The *platforms* JSON object MUST contain one or more of the following fields depending on how the human user interacts with the app:
 
@@ -422,7 +197,7 @@ A platform field is a JSON object that has the following fields:
 | downloadUrl | string | URL to download a binary | O |
 | artifactDid | string | See Appendix A | O |
 
-### JSON Format: *dataUrl.endpoint* {#json-format:-dataurl.endpoint}
+### JSON Format: *dataUrl.endpoint*
 
 The *endpoint* JSON object contains the following fields:
 
@@ -434,7 +209,7 @@ The *endpoint* JSON object contains the following fields:
 
 For *interface* \= 4 (contracts), the chain ID is taken from the DID (did:pkh with CAIP-10 ID). Clients can then determine the format the RPC endpoint requires based on the chain ID. 
 
-### JSON Format: *dataUrl.payments* {#json-format:-dataurl.payments}
+### JSON Format: *dataUrl.payments*
 
 The *payment* array contains at least one JSON object if payment is required.  The possible JSON objects are differentiated by the *type* field.  There are currently only two possible values for the *type* field: *x402* and *manual*.  The below tables describe these two objects.
 
@@ -449,7 +224,7 @@ The *payment* array contains at least one JSON object if payment is required.  T
 | type | string | “manual” | Y |
 | url | string | Describes pricing information and payment mechanics. | O |
 
-### JSON Format: *dataUrl.mcp* {#json-format:-dataurl.mcp}
+### JSON Format: *dataUrl.mcp*
 
 This object represents the MCP specification and gives agents the information they need to interface with an MCP server.  The reader is referred to the specification of MCP v1.0 (modelcontextprotocol.io, Section 3, Server Metadata), which has descriptions of each field and is incorporated by reference.  
 
@@ -503,7 +278,7 @@ The *authentication* JSON object contains the following fields:
 | oauth2 | JSON |  | N |
 | blockchain | JSON |  | N |
 
-### JSON Format: *dataUrl.artifacts* {#json-format:-dataurl.artifacts}
+### JSON Format: *dataUrl.artifacts*
 
 *dataUrl.artifacts* is a JSON map keyed by the value of *artifactDid* (see Appendix A). It carries integrity and distribution details for any verifiable payload referenced from *dataUrl.platforms*.
 
@@ -562,7 +337,7 @@ JSON example for the *binaries* field:
 }]
 ```
 
-### Application Ownership Confirmation {#application-ownership-confirmation}
+### Application Ownership Confirmation
 
 To increase trust in the onchain and offchain data described in an app token, the app owner SHOULD provide proof of ownership of the data.  Clients of the registry SHOULD confirm ownership of certain data provided by the app owner.  This section describes the various mechanisms used for each field.
 
@@ -655,7 +430,7 @@ The JSON returned by the *dataUrl* API endpoint MUST contain the *owner* field, 
     
 * URLs that cannot be verified SHOULD be treated with caution. 
 
-### Control Policy {#control-policy}
+### Control Policy
 
 App Registry contracts MUST manage when version updates are required and when new NFT mints are required.  These policies are based on policies of existing app stores that have years of experience mitigating fraudulent behavior.  
 
@@ -682,14 +457,14 @@ An App Registry contract MUST enforce the following rules:
 
 Table 3:  Allowed DID methods for Application Registry DID field.
 
-### Control Policy Justification {#control-policy-justification}
+### Control Policy Justification
 
 * Apple’s App Store ties immutability to the Bundle ID, forbidding any Bundle ID change once an app is live, so users always know they’re running the same canonical app. Google Play enforces the same rule on the Android Package Name, requiring publishers to create an entirely new listing if they change it.   
 * Swapping the fungibleTokenId on-chain is equivalent to issuing an infinite‑mint ERC‑20 rug pull, so we freeze that field and demand a new DID/NFT to alter it.    
 * Because CAIP‑19 encodes the contract address in the asset ID, any breaking executable change must mint a new NFT keyed by (did,major) to maintain deterministic asset lookups.   
 * Non‑breaking API additions only require a minor bump in version number, signaling backward compatibility, while metadata or binary tweaks controlled by dataHash require only a patch bump. 
 
-### Optional Soulbound Mode {#optional-soulbound-mode}
+### Optional Soulbound Mode
 
 When enabled, transfers and approvals MUST be rejected; minting and burning remain allowed.
 
@@ -697,7 +472,7 @@ API impact: No new fields are required (mode can be implicit or a boolean per to
 
 UI guidance: Stores SHOULD visually label soulbound apps.
 
-### Indexing Requirements {#indexing-requirements}
+### Indexing Requirements
 
 Implementations MUST make all state changes observable for indexers in a machine-consumable way.
 
@@ -709,7 +484,7 @@ Implementations MUST make all state changes observable for indexers in a machine
 
 * Profiles: EVM profile SHOULD use events; other profiles MAY prefer counters/journals. Either path MUST provide enough data for a stateless indexer to reach eventual consistency.
 
-### App Registry API {#app-registry-api}
+### App Registry API
 
 The Application Registry API allows developers to access the Application Registry.  The API provides native blockchain JSON-RPC smart contract APIs (recommended) and a web2 API.  The OMATrust Registry contract supports the following functions:
 
@@ -794,46 +569,41 @@ The request returns the same DID Document as the REST API call.
 
 Reputation Integration:  TBD
 
-## Ownership Resolver Contract {#ownership-resolver-contract}
+## Ownership Resolver Contract
 
-### DID ownership is verified at token minting time. OMA3 uses a dedicated **Resolver contract** to confirm ownership and arbitrate conflicts when multiple parties claim to own the same DID. {#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.}
+DID ownership is verified at token minting time. OMA3 uses a dedicated **Resolver contract** to confirm ownership and arbitrate conflicts when multiple parties claim to own the same DID.
 
-### **Process** {#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.}
+### Process
 
-1. ### **First Attestation:** The owner of a DID gets an attestation from an approved issuer to that confirms ownership of the DID.  This confirmation process can be manual (e.g.- in conjunction with a cybersecurity audit) or automatic (e.g.- a server that checks .well-known/did.json programmatically).  The Resolver contract holds the attestation onchain. {#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.}
+1. **First Attestation:** The owner of a DID gets an attestation from an approved issuer to that confirms ownership of the DID. This confirmation process can be manual (e.g.- in conjunction with a cybersecurity audit) or automatic (e.g.- a server that checks `.well-known/did.json` programmatically). The Resolver contract holds the attestation onchain.
 
-2. ### **First Mint:** With the ownership attestation in place, the owner mints the application with the wallet address in the attestation.  The Resolver contract checks the attestation before confirming the mint.
+2. **First Mint:** With the ownership attestation in place, the owner mints the application with the wallet address in the attestation. The Resolver contract checks the attestation before confirming the mint.
 
-3. ### **Challenge:** A challenger may attempt to rebind a DID by minting the same DID/version combination.  {#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.}
+3. **Challenge:** A challenger may attempt to rebind a DID by minting the same DID/version combination.
+   * The challenger MUST either ask the original issuer to reverse the attestation (issuing a new attestation) or enlist at least two other approved issuers to attest to the challenger's ownership of the DID in question. The Resolver compares the challenger's attestation score against the incumbent's.
+   * Scores are based on the count of valid, non-revoked attestations from an approved list of issuers.
+   * Only attestations older than a global **maturation delay** (e.g., 72h) count toward scores, creating a rolling challenge window.
 
-   * ### The challenger MUST either ask the original issuer to reverse the attestation (issuing a new attestation) or enlist at least two other approved issuers to attest to the challenger’s ownership of the DID in question.  The Resolver compares the challenger’s attestation score against the incumbent’s.
+4. **Resolution:** If the number of challenger attestations strictly exceed incumbent's, ownership flips. Otherwise, the challenge fails.
 
-   * ### Scores are based on the count of valid, non-revoked attestations from an approved list of issuers.
+### Attestation model
 
-   * ### Only attestations older than a global **maturation delay** (e.g., 72h) count toward scores, creating a rolling challenge window.
+* Attestations are EIP-712 signed by approved attesters (starting with the OMA3 verification server).
+* Each `(attester, did, epoch, claimer)` has only one active attestation, which can be updated or revoked.  
+* Events record every `AttestationUpdated`, `ConflictAttempted`, and `OwnershipChanged`.
 
-4. ### **Resolution:** If the number of challenger attestations strictly exceed incumbent’s, ownership flips. Otherwise, the challenge fails. {#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.}
+### Notification
 
-### **Attestation model** {#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.}
+* Incumbents receive notice via events; off-chain watchers (or push notification services) subscribe to these logs.
+* An optional notifier callback can be registered by incumbents for on-chain hooks.
 
-* ### Attestations are EIP-712 signed by approved attesters (starting with the OMA3 verification server). {#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.}
+This model ensures predictable resolution without upgradeable registries, while allowing flexible evolution of conflict policy.
 
-* Each *(attester, did, epoch, claimer)* has only one active attestation, which can be updated or revoked.  
-* Events record every *AttestationUpdated, ConflictAttempted*, and *OwnershipChanged*.
+## Reputation Service
 
-### **Notification** {#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.}
+A permissionless app registry without third party attestations leaves users open to fraud. Adversaries can register malicious, fraudulent, misleading, and counterfeit apps. To address this problem OMATrust leverages the Reputation System.
 
-* ### Incumbents receive notice via events; off-chain watchers (or push notification services) subscribe to these logs. {#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.}
-
-* ### An optional notifier callback can be registered by incumbents for on-chain hooks. {#an-optional-notifier-callback-can-be-registered-by-incumbents-for-on-chain-hooks.}
-
-### This model ensures predictable resolution without upgradeable registries, while allowing flexible evolution of conflict policy. {#this-model-ensures-predictable-resolution-without-upgradeable-registries,-while-allowing-flexible-evolution-of-conflict-policy.}
-
-## Reputation Service {#reputation-service-1}
-
-### A permissionless app registry without third party attestations leaves users open to fraud.  Adversaries can register malicious, fraudulent, misleading, and counterfeit apps.  To address this problem OMATrust leverages the Reputation System. {#a-permissionless-app-registry-without-third-party-attestations-leaves-users-open-to-fraud.-adversaries-can-register-malicious,-fraudulent,-misleading,-and-counterfeit-apps.-to-address-this-problem-omatrust-leverages-the-reputation-system.}
-
-### OMATrust Reputation System {#omatrust-reputation-system}
+### OMATrust Reputation System
 
 The OMATrust Reputation System leverages and augments existing services like Ethereum Attestation Service.  It is comprised of the following components:
 
@@ -843,7 +613,7 @@ The OMATrust Reputation System leverages and augments existing services like Eth
      
 3. Resolver:  the Resolver contract stores onchain attestations related to ownership, as described above.
 
-### DID → Index Address Mapping and Searching {#did-→-index-address-mapping-and-searching}
+### DID → Index Address Mapping and Searching
 
 To enable efficient per-DID discovery in contexts where a Solidity *address* is used as an index key (including the *recipient* field in EAS), OMATrust defines a deterministic mapping from a DID to an Index Address.
 
@@ -863,49 +633,47 @@ library DidIndex {
 }
 ```
 
-### Where: {#query-eas-for-attestations-with-recipient-=-indexaddress(did)-and-a-given-schema-uid-(e.g.,-oma3userreview@1).}
+Where:
 
-* ### *`canonicalizeDID(did)`* applies normalization rules defined by the DID method. For example: {#query-eas-for-attestations-with-recipient-=-indexaddress(did)-and-a-given-schema-uid-(e.g.,-oma3userreview@1).}
+* `canonicalizeDID(did)` applies normalization rules defined by the DID method. For example:
+  * **did:web**: lowercase the host, apply IDNA/punycode for international domains, preserve the path.
+  * **did:pkh**: use the canonical chain/account encoding.
 
-  * ### **did:web**: lowercase the host, apply IDNA/punycode for international domains, preserve the path. {#query-eas-for-attestations-with-recipient-=-indexaddress(did)-and-a-given-schema-uid-(e.g.,-oma3userreview@1).}
+* `didHash` is the keccak256 digest of the canonicalized DID string.
 
-  * ### **did:pkh**: use the canonical chain/account encoding. {#query-eas-for-attestations-with-recipient-=-indexaddress(did)-and-a-given-schema-uid-(e.g.,-oma3userreview@1).}
+### Design Rationale
 
-* ### *`didHash`* is the keccak256 digest of the canonicalized DID string. {#query-eas-for-attestations-with-recipient-=-indexaddress(did)-and-a-given-schema-uid-(e.g.,-oma3userreview@1).}
+* **Domain separation & versioning:** The ASCII prefix `DID:Solidity:Address:v1:` ensures compatibility and clear separation from other schemes. Future revisions can use updated prefixes (e.g., `…:v2:`).
 
-### **Design Rationale:** {#query-eas-for-attestations-with-recipient-=-indexaddress(did)-and-a-given-schema-uid-(e.g.,-oma3userreview@1).}
+* **Portability:** The Index Address can be used anywhere an `address` index is expected—EAS recipients, event partition keys, or contract mappings.
 
-* ### **Domain separation & versioning:** The ASCII prefix *`DID:Solidity:Address:v1:`* ensures compatibility and clear separation from other schemes. Future revisions can use updated prefixes (e.g., `…:v2:`). {#query-eas-for-attestations-with-recipient-=-indexaddress(did)-and-a-given-schema-uid-(e.g.,-oma3userreview@1).}
+* **Semantics:** The Index Address is a **label for indexing only**. It is not a wallet and does not imply control or ownership.
 
-* ### **Portability:** The Index Address can be used anywhere an *`address`* index is expected—EAS recipients, event partition keys, or contract mappings. {#query-eas-for-attestations-with-recipient-=-indexaddress(did)-and-a-given-schema-uid-(e.g.,-oma3userreview@1).}
-
-* ### **Semantics:** The Index Address is a **label for indexing only**. It is not a wallet and does not imply control or ownership. {#query-eas-for-attestations-with-recipient-=-indexaddress(did)-and-a-given-schema-uid-(e.g.,-oma3userreview@1).}
-
-* ### **Collision risk:** Negligible (≈ 1 / 2¹⁶⁰). The prefix further reduces overlap with unrelated mappings.
+* **Collision risk:** Negligible (≈ 1 / 2¹⁶⁰). The prefix further reduces overlap with unrelated mappings.
 
 ### Attestation Querying
 
-### Clients can retrieve attestations related to a DID by computing its Index Address and filtering attestations accordingly. {#query-eas-for-attestations-with-recipient-=-indexaddress(did)-and-a-given-schema-uid-(e.g.,-oma3userreview@1).}
+Clients can retrieve attestations related to a DID by computing its Index Address and filtering attestations accordingly.
 
-### **Example query flow:** {#query-eas-for-attestations-with-recipient-=-indexaddress(did)-and-a-given-schema-uid-(e.g.,-oma3userreview@1).}
+### Example query flow
 
-1. ### Compute *`indexAddress(did)`* using the algorithm above. {#query-eas-for-attestations-with-recipient-=-indexaddress(did)-and-a-given-schema-uid-(e.g.,-oma3userreview@1).}
+1. Compute `indexAddress(did)` using the algorithm above.
 
-2. ### Query EAS for attestations with *`recipient = indexAddress(did)`* and a given schema UID (e.g., *`Oma3UserReview@1`*). {#query-eas-for-attestations-with-recipient-=-indexaddress(did)-and-a-given-schema-uid-(e.g.,-oma3userreview@1).}
+2. Query EAS for attestations with `recipient = indexAddress(did)` and a given schema UID (e.g., `Oma3UserReview@1`).
 
-3. ### Within each attestation payload, confirm that *`subjectDidHash`* matches the DID hash used to derive the recipient. This prevents mismatches or spoofing.
+3. Within each attestation payload, confirm that `subjectDidHash` matches the DID hash used to derive the recipient. This prevents mismatches or spoofing.
 
 ### EAS Integration: Recipient Rule
 
-### When storing an attestation about a DID in EAS:
+When storing an attestation about a DID in EAS:
 
-* ### The *`recipient`* field MUST equal the computed *`indexAddress(did)`.*
+* The `recipient` field MUST equal the computed `indexAddress(did)`.
 
-* ### The attestation payload MUST include *`subjectDidHash`*, which is exactly the *`didHash`* derived during Index Address computation.
+* The attestation payload MUST include `subjectDidHash`, which is exactly the `didHash` derived during Index Address computation.
 
-#### **Example Schema: *`Oma3UserReview@1`***
+#### Example Schema: `Oma3UserReview@1`
 
-### A review attestation payload might be structured as:
+A review attestation payload might be structured as:
 
 ```
 struct UserReviewPayload {
@@ -917,9 +685,9 @@ struct UserReviewPayload {
 }
 ```
 
-#### **Discovery Pattern**
+#### Discovery Pattern
 
-### To fetch reviews about a DID:
+To fetch reviews about a DID:
 
 ```
 address recipient = indexAddress(did);
@@ -928,11 +696,9 @@ address recipient = indexAddress(did);
 // recipient == indexAddress(did)
 ```
 
-### Then decode the attestation payloads and resolve *`contentHash`* for off-chain content when needed.
+Then decode the attestation payloads and resolve `contentHash` for off-chain content when needed.
 
-### Clients can retrieve attestations related to a DID by computing its Index Address and filtering attestations accordingly.
-
-### Linked Identifier Schema {#linked-identifier-schema}
+### Linked Identifier Schema
 
 This schema provides additional attestations on control of an ID by another ID.  For example, attesting that the entity that controls one blockchain address also controls a different blockchain address.  Examples of IDs that can be entered into a Linked Identifier attestation:
 
@@ -985,7 +751,7 @@ To bind a \``` did:web` `` identifier to a blockchain wallet address, the schema
 
 **Usage:** Clients and registries SHOULD only consider a did:web binding valid if a live Linked Identifier attestation exists proving control of both identifiers.
 
-### Data URL Schema {#data-url-schema}
+### Data URL Schema
 
 Every app token stores two on-chain pointers to its mutable metadata:
 
@@ -1003,7 +769,7 @@ To prevent silent or misleading edits, each manifest must be covered by a third-
 | 3 .  Register hash | App developer | Call `updateMetadata(tokenId, dataUrl, dataHash)`; the contract rejects the call unless a matching attestation exists. |
 | 4 . Client verification | Wallet / marketplace | a) Fetch `dataUrl` JSON. b) Compute `hash(JSON)` and compare to on-chain `dataHash`. c) Confirm an attestation referencing that same hash is still valid. d) Only display the app if both checks pass. |
 
-#### Why this is secure {#why-this-is-secure}
+#### Why this is secure
 
 * Immutability guarantee – Any byte-level change (even a new screenshot) alters the hash; the old attestation no longer matches, so UIs hide the app until a new review is issued.
 
@@ -1011,7 +777,7 @@ To prevent silent or misleading edits, each manifest must be covered by a third-
 
 * Audit trail – Every approved version leaves an on-chain record (`dataHash` \+ attestationId), giving provable history for compliance audits.
 
-#### Manual review requirements {#manual-review-requirements}
+#### Manual review requirements
 
 A reviewer MUST verify at minimum:
 
@@ -1023,11 +789,11 @@ A reviewer MUST verify at minimum:
 
 Once satisfied, the reviewer signs the attestation that binds *their* approval to the specific `dataHash`. Any later change triggers the whole cycle again, ensuring continuous trust in all mutable data while keeping the registry fully decentralised.
 
-### Endorsement Schema {#endorsement-schema}
+### Endorsement Schema
 
 An Endorsement attestation is a simple way for an organization to vouch for a DID subject..
 
-### Certification Schema {#certification-schema}
+### Certification Schema
 
 A certification attestation is a more structured type of endorsement that reflects the typical certification model used by certification bodies such as the Federal Trade Commission, Common Criteria, FIPS, Underwriter Laboratories, SunSpec Alliance, and countless others.  In these programs there are four main actors:
 
@@ -1043,7 +809,7 @@ The use case flow using a certification schema is as follows:
 3. Assessor sends test results to the Certification Body.  
 4. Certification Body reviews the test results.  If it passes, it signs the Certification attestation transaction.  If not, it sends the failure reasons to the Assessor.
 
-### User Review Schema {#user-review-schema}
+### User Review Schema
 
 User reviews are critical for any app’s reputation.  The User Review attestation allows anyone to post a review on a DID.  
 
@@ -1051,7 +817,7 @@ The problem with permissionless reviews is that a developer can review their own
 
 Specifications on the below schemas can be found in the [OMA3 Reputation Service draft proposal](https://docs.google.com/document/d/11NQgwzXkXMGXy07NIDcMovPjKQT4W3CiHWdNZ2TpbQ0/).
 
-### Client Guidance {#client-guidance}
+### Client Guidance
 
 To ensure integrity and prevent user harm from fraudulent or misleading app metadata, all clients consuming data from OMATrust SHOULD adopt an attestation-based trust policy.
 
@@ -1082,19 +848,18 @@ If an application does not have a valid attestation:
 
 This approach balances decentralized publishing with user trust, enabling permissionless participation while minimizing abuse.
 
-# Change History {#change-history}
+# Change History
 
 | Version | Date | Comments |
 | :---- | :---- | :---- |
-| 0.1 |  | Initial draft \- Alfred Tom |
-|  |  |  |
-|  |  |  |
+| 0.1 | 2024-11 | Initial draft - Alfred Tom |
+| 1.0-DRAFT | 2024-12 | Complete specification draft with OMATrust rebrand |
 
-# **Appendix A — `did:artifact` (Provisional)** {#appendix-a-—-did:artifact-(provisional)}
+# Appendix A — `did:artifact` (Provisional)
 
 **Status.** Provisional DID method used within this specification to identify **verifiable payloads** (binaries, containers, and website proof files such as SRI manifests or site snapshots). A standalone method spec and registry entry will follow.
 
-## **A.1 Overview** {#a.1-overview}
+## A.1 Overview
 
 `did:artifact` is a **content-addressable identifier**. The method-specific ID is a **CIDv1** (multibase base32-lower) whose **multihash** encodes the hash algorithm and digest of the artifact’s bytes.  
 **V1 requirement:** the multihash **MUST** be **sha2-256** (32-byte digest).
@@ -1103,18 +868,17 @@ This approach balances decentralized publishing with user trust, enabling permis
 * Websites: hash a **proof artifact** (e.g., JCS-canonicalized SRI manifest JSON, or a site snapshot archive).  
 * Each artifact gets its **own** DID; different files/proofs → different DIDs.
 
-## **A.2 Identifier Syntax** {#a.2-identifier-syntax}
+## A.2 Identifier Syntax
 
 ```
 did:artifact:<cidv1>
 ```
 
-*   
-  `<cidv1>` **MUST** be CIDv1 encoded with multibase **base32-lower**.  
-* The CID’s multihash **MUST** use **sha2-256** under this spec version.  
+* `<cidv1>` **MUST** be CIDv1 encoded with multibase **base32-lower**.  
+* The CID's multihash **MUST** use **sha2-256** under this spec version.  
 * The multicodec **SHOULD** be `raw` for opaque bytes. Using a more specific codec does not change verification semantics.
 
-## **A.3 Computing `artifactDid`** {#a.3-computing-artifactdid}
+## A.3 Computing `artifactDid`
 
 **Common procedure (all artifact types):**
 
@@ -1132,7 +896,7 @@ did:artifact:<cidv1>
   * Paths in the manifest **MUST** be same-origin absolute paths (no query/fragment). Producer normalization: single percent-decode, Unicode NFC, collapse `//`, strip trailing `/` (except root), preserve case.  
 * **Website snapshot (archive):** create a deterministic archive when possible (fixed owner/mode/timestamps). Apply common procedure to the archive bytes.
 
-## **A.4 Verification (Client Requirements)** {#a.4-verification-(client-requirements)}
+## A.4 Verification (Client Requirements)
 
 When a record references an `artifactDid`, verifiers **MUST**:
 
@@ -1143,11 +907,11 @@ When a record references an `artifactDid`, verifiers **MUST**:
 **Websites:**
 
 * If the artifact is an **SRI manifest**, verifiers **SHOULD** also validate loaded assets against the per-file SRI hashes.  
-* If the artifact is a **snapshot**, verifiers **MAY** present a “verified snapshot” badge when the content matches.
+* If the artifact is a **snapshot**, verifiers **MAY** present a "verified snapshot" badge when the content matches.
 
 **No trust from URLs.** Links are advisory for discovery/distribution only.
 
-## **A.5 Data Model Integration (normative hooks)** {#a.5-data-model-integration-(normative-hooks)}
+## A.5 Data Model Integration (normative hooks)
 
 * **`dataUrl.platforms`**  
   * `launchUrl` (**required**) is the user-facing deep link/store page.  
@@ -1161,53 +925,43 @@ When a record references an `artifactDid`, verifiers **MUST**:
     * website: `originDid` (`did:web:<apex>`), and either inline `sriManifest` (the canonicalized JSON used for hashing) **or** pointers `manifestDid`/`snapshotDid` (both `did:artifact:*`).  
   * **Compatibility (optional):** `algo` (e.g., `"sha256"`), `digestHex` (lowercase); included for OCI/TUF/Sigstore tooling.
 
-## **A.6 Policy (V1)** {#a.6-policy-(v1)}
+## A.6 Policy (V1)
 
 * **Allowed hash:** only **sha2-256** is permitted for producing `did:artifact` values under this spec version. Verifiers **MUST** read the multihash algorithm but **MUST reject** non-permitted algorithms.  
-* **Website scope:** website proof artifacts **MUST** be scoped to an apex origin; cross-origin redirects **MUST NOT**be followed during attestation/verification.  
+* **Website scope:** website proof artifacts **MUST** be scoped to an apex origin; cross-origin redirects **MUST NOT** be followed during attestation/verification.  
 * **Caching:** verifiers MAY cache computed CIDs; any new download **MUST** be re-verified.
 
-## **A.7 Security Considerations** {#a.7-security-considerations}
+## A.7 Security Considerations
 
 * **Redirect/mirror safety:** content identity derives solely from `artifactDid`; mirrors/CDNs are acceptable.  
 * **Dynamic content:** SRI manifests cover only listed assets; non-listed dynamic responses are **out of scope** and should be treated as unverified.  
 * **Determinism:** prefer deterministic packaging to avoid unintentional hash churn.  
 * **Keyed proofs:** signatures/SBOM/provenance strengthen trust but **do not replace** byte-level verification against `artifactDid`.  
-* **DID Index Address semantics**: \`indexAddress(did)\` (see §{\#did-index-address}) is a deterministic \*\*indexing label\*\* for discovery and partitioning, not proof of control. Do \*\*not\*\* interpret it as a signer/owner; never send assets to it. The chance a real EOA equals this address is negligible (≈ 1 / 2^160), and the versioned prefix prevents cross-scheme overlap.
+* **DID Index Address semantics**: `indexAddress(did)` is a deterministic **indexing label** for discovery and partitioning, not proof of control. Do **not** interpret it as a signer/owner; never send assets to it. The chance a real EOA equals this address is negligible (≈ 1 / 2^160), and the versioned prefix prevents cross-scheme overlap.
 
-## **A.8 DID Index Address Helper** {#a.8-did-index-address-helper}
+## A.8 DID Index Address Helper
 
-Reference Solidity helper for computing the Index Address from a \`didHash\`:
+Reference Solidity helper for computing the Index Address from a `didHash`:
 
-\`\`\`solidity
-
+```solidity
 library DidIndex {
-
     /// @notice Compute the DID Index Address used for EAS recipient or other address-keyed indexes.
-
-    /// @dev didHash \= keccak256(canonicalizeDID(did))
-
+    /// @dev didHash = keccak256(canonicalizeDID(did))
     function toAddress(bytes32 didHash) internal pure returns (address) {
-
         // Domain-separated, versioned prefix for portability and clarity.
-
-        bytes32 h \= keccak256(abi.encodePacked("DID:Solidity:Address:v1:", didHash));
-
+        bytes32 h = keccak256(abi.encodePacked("DID:Solidity:Address:v1:", didHash));
         return address(uint160(uint256(h)));
-
     }
-
 }
-
-\`\`\`
+```
 
 **Safety:** The returned address is an **index label**, not a controller. Never infer control or send assets to it. Always include `subjectDidHash` in payloads and verify consistency with the derived `recipient`.
 
-## **A.9 Forthcoming Method Registration (informative)** {#a.9-forthcoming-method-registration-(informative)}
+## A.9 Forthcoming Method Registration (informative)
 
 This appendix will be extracted into a standalone `did:artifact` method specification and registered in the **W3C DID Spec Registries**. The standalone spec will define a minimal DID Document and JSON-LD context (e.g., `https://w3id.org/did-artifact/v1`). Until then, this appendix is the normative definition for use within this specification.
 
-## **A.10 Examples (informative)** {#a.10-examples-(informative)}
+## A.10 Examples (informative)
 
 **Binary (Windows installer)**
 
@@ -1264,23 +1018,22 @@ This appendix will be extracted into a standalone `did:artifact` method specific
 
 ---
 
-### **Editor’s note (remove before publishing)** {#editor’s-note-(remove-before-publishing)}
+### Editor's note (remove before publishing)
 
-* Add “See Appendix A.2” references next to `artifactDid` mentions in `dataUrl.platforms` and `dataUrl.artifacts`.  
+* Add "See Appendix A.2" references next to `artifactDid` mentions in `dataUrl.platforms` and `dataUrl.artifacts`.  
 * When you create the external repo, move this appendix verbatim, add test vectors, and link back here.
 
-**Appendix B**  
-**Website Artifacts and SRI Manifests Draft Notes**
+## Appendix B — Website Artifacts and SRI Manifests Draft Notes
 
 **Status:** Informative draft. Not required for v1 conformance. This appendix captures design intent for website verification to be finalized in v2.
 
-## **W.1 Summary (design intent)** {#w.1-summary-(design-intent)}
+### W.1 Summary (design intent)
 
 * Website proofs will use **`artifactDid = did:artifact:<cidv1>`** (same as binaries).  
 * The website proof artifact will be an **SRI manifest (JSON)** whose **JCS-canonicalized** bytes are hashed (SHA-256 → CIDv1) to form the `artifactDid`.  
 * `platforms.web.launchUrl` remains the UX entry point; `platforms.web.artifactDid` (optional for v1) can point to the website proof artifact when available.
 
-## **W.2 Planned artifact shape (non-normative)** {#w.2-planned-artifact-shape-(non-normative)}
+### W.2 Planned artifact shape (non-normative)
 
 ```json
 "artifacts": {
@@ -1303,7 +1056,7 @@ This appendix will be extracted into a standalone `did:artifact` method specific
 * The `"origin"` inside the manifest binds it to the domain and is part of the hashed bytes.  
 * No separate `originDid` is required in v1 draft; the client already knows the domain via `platforms.web.launchUrl`.
 
-## **W.3 Planned verification algorithm (non-normative)** {#w.3-planned-verification-algorithm-(non-normative)}
+### W.3 Planned verification algorithm (non-normative)
 
 1. Resolve `artifactDid` from `platforms.web.artifactDid`.  
 2. Obtain manifest bytes (inline `sriManifest` or fetch via `downloadUrls`).  
@@ -1311,11 +1064,11 @@ This appendix will be extracted into a standalone `did:artifact` method specific
 4. Ensure `registrableDomain(platforms.web.launchUrl) == sriManifest.origin`.  
 5. When rendering the site, validate loaded assets against manifest SRI entries.
 
-## **W.4 Open items (track in issues)** {#w.4-open-items-(track-in-issues)}
+### W.4 Open items (track in issues)
 
 * Deterministic packaging & test vectors for SRI manifests (JCS inputs/outputs).  
 * Handling multi-origin assets (likely **out of scope** for v1 web verification).  
-* Optional “snapshot” artifact (tar/warc) and how to embed origin metadata inside the archive if added later.  
+* Optional "snapshot" artifact (tar/warc) and how to embed origin metadata inside the archive if added later.  
 * UX guidance for partial verification (some assets verified, others not).  
 * Attestation linkage: publisher → domain (`ProofOfWebControl`) vs. publisher → artifact (`ArtifactBinding`).
 
