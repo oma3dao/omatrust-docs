@@ -4,6 +4,11 @@
 
 OMATrust is a decentralized verification protocol that enables developers, auditors, and users to create machine-verifiable trust signals for apps, APIs, websites, and smart contracts. Built by [OMA3](https://oma3.org), a Swiss non-profit consortium, OMATrust provides the foundation for a verifiable, AI-ready internet.
 
+## License and Participation
+
+- [License terms](./LICENSE)
+- Contributor terms are defined in [CONTRIBUTING.md](./CONTRIBUTING.md)
+
 ## Core Documents
 
 - **[Whitepaper](./whitepaper.md)** - Vision, architecture, and economic model
