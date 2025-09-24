@@ -168,14 +168,17 @@ Each repository can be developed independently:
 
 ```bash
 # Registry contracts
+git clone https://github.com/oma3dao/app-registry-evm-solidity
 cd app-registry-evm-solidity
 npm install && npm run compile && npm test
 
 # Reputation schemas  
+git clone https://github.com/oma3dao/rep-attestation-tools-evm-solidity
 cd rep-attestation-tools-evm-solidity
 npm install && npm run deploy:testnet
 
 # Frontend applications
+git clone https://github.com/oma3dao/app-registry-frontend
 cd app-registry-frontend
 npm install && npm run dev
 ```

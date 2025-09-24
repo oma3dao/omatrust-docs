@@ -256,7 +256,7 @@ Before finalizing any document conversion:
 ## 📞 Support
 
 If you encounter issues not covered in this guide:
-1. Check the [GitHub Issues](../../issues) for similar problems
+1. Check the [GitHub Issues](https://github.com/oma3dao/omatrust-docs/issues) for similar problems
 2. Create a new issue with specific details
 3. Tag relevant team members for review
 

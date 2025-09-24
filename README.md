@@ -20,10 +20,10 @@ The OMATrust ecosystem spans multiple specialized repositories:
 
 | Repository | Description | Status |
 |------------|-------------|---------|
-| **[omatrust-registry-contracts](../app-registry-evm-solidity/)** | Core registry smart contracts | Active |
-| **[omatrust-reputation-schemas](../rep-attestation-tools-evm-solidity/)** | Attestation schemas and tools | Active |
-| **[omatrust-registry-frontend](../app-registry-frontend/)** | Registry web interface | Active |
-| **[omatrust-reputation-frontend](../rep-attestation-frontend/)** | Reputation and reviews interface | Active |
+| **[omatrust-registry-contracts](https://github.com/oma3dao/app-registry-evm-solidity)** | Core registry smart contracts | Active |
+| **[omatrust-reputation-schemas](https://github.com/oma3dao/rep-attestation-tools-evm-solidity)** | Attestation schemas and tools | Active |
+| **[omatrust-registry-frontend](https://github.com/oma3dao/app-registry-frontend)** | Registry web interface | Active |
+| **[omatrust-reputation-frontend](https://github.com/oma3dao/rep-attestation-frontend)** | Reputation and reviews interface | Active |
 
 > See [repositories.md](./repositories.md) for detailed descriptions and relationships.
 
@@ -33,7 +33,7 @@ The OMATrust ecosystem spans multiple specialized repositories:
 **Register your applications for verification:**
 - Apps include websites, binaries, mobile apps, APIs, MCP servers, and even agents (see the specification for details)
 - Visit [appregistry.oma3.org](https://appregistry.oma3.org) to tokenize your app, API, or website
-- Review the [registry frontend repository](../app-registry-frontend/) for integration examples
+- Review the [registry frontend repository](https://github.com/oma3dao/app-registry-frontend) for integration examples
 - See the [Specification](./specification.md) for supported application types and metadata requirements
 - If you work with an audit firm (SOC 2, pen testing, etc.), encourage them to participate in OMATrust to make your audits verifiable and discoverable
 
@@ -48,7 +48,7 @@ The OMATrust ecosystem spans multiple specialized repositories:
 - *Tooling and SDKs for client integration coming soon*
 
 ### For Auditors
-Review [attestation schemas](../rep-attestation-tools-evm-solidity/schemas-json/) and use the [reputation frontend](../rep-attestation-frontend/) to publish cryptographic attestations.
+Review [attestation schemas](https://github.com/oma3dao/rep-attestation-tools-evm-solidity/tree/main/schemas-json) and use the [reputation frontend](https://github.com/oma3dao/rep-attestation-frontend) to publish cryptographic attestations.
 
 ### For Users  
 Visit verify.omatrust.org to search verified applications, submit reviews, and verify website legitimacy.
@@ -75,7 +75,7 @@ OMATrust is open source and welcomes contributions:
 ## Connect
 
 - **Documentation**: [docs.omatrust.org](https://docs.oma3.org)
-- **Twitter**: [@OMA3DAO](https://twitter.com/oma3dao)
+- **Twitter**: [@oma3dao](https://twitter.com/oma3dao)
 - **LinkedIn**: [Home Page](https://www.linkedin.com/company/oma3/)
 
 ## License
