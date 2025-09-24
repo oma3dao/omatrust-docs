@@ -1,0 +1,14 @@
+# Working files - don't commit drafts and exports
+temp/
+
+# macOS
+.DS_Store
+
+# Editor files
+.vscode/
+*.swp
+*.swo
+
+# Backup files
+*~
+*.bak

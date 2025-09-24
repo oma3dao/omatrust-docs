@@ -1,4 +1,8 @@
-# **OMATrust  Whitepaper**
+# **OMATrust Whitepaper**
+
+**Version 1.0** | **September 2025** | **OMA3 Consortium**
+
+---
 
 ## **1\. Executive Summary**
 
@@ -31,13 +35,13 @@ For individual users, the risks are familiar:
 
 These are not edge cases. They are everyday experiences that show how trust online is fragile, fragmented, and unverifiable.
 
-### **Walled Gardens Show What’s Possible — and What’s Missing**
+### **2.1 Walled Gardens Show What's Possible — and What's Missing**
 
 Inside walled gardens like the Apple App Store, Google Play, Roblox, or Amazon, trust systems exist and deliver real consumer value. Many users won’t download a Mac app unless it’s in the App Store. Roblox players rely on platform curation before games are listed. Amazon shoppers depend on product reviews.
 
 These examples prove that **trust infrastructure works and improves adoption**. But they also expose the problem: these systems are closed, proprietary, and inconsistent. Trust does not extend across ecosystems, and vast parts of the internet — websites, APIs, SaaS tools, and smart contracts — have no equivalent.
 
-### **The Limits of Today’s Trust Signals**
+### **2.2 The Limits of Today's Trust Signals**
 
 The mechanisms we rely on today were never designed to provide universal, programmatic trust:
 
@@ -48,7 +52,7 @@ The mechanisms we rely on today were never designed to provide universal, progra
 
 Users and businesses are not “blind” to these risks; they rely on **social signals** like reviews, ratings, forums, and brand reputation. But these are inconsistent, siloed, and easily manipulated — and they cannot provide the cryptographic verifiability that AI agents and automated systems require.
 
-### **Why This Hasn’t Been Built Yet**
+### **2.3 Why This Hasn't Been Built Yet**
 
 The internet did create early **neutral standards** like SSL, IETF protocols, and W3C specifications. But after those foundations were laid, the economics shifted. Big Tech realized they could monetize trust inside their own platforms — through app stores, curated ecosystems, and review systems — and that’s where investment went.
 
@@ -56,7 +60,7 @@ The open internet was left with partial fixes. Industry initiatives like the Lin
 
 This is where blockchain changes the equation: for the first time, we can align **neutral governance** with **sustainable economics** in one system.
 
-### **Why the Problem is Urgent Now**
+### **2.4 Why the Problem is Urgent Now**
 
 The rise of AI agents makes this problem existential. Bots have quietly dominated internet traffic for years — scraping, crawling, and automating interactions at massive scale. Even without full-scale agent adoption, the lack of a verifiable trust layer has already created systemic vulnerabilities.
 
@@ -149,29 +153,29 @@ While OMATrust functions across chains, OMAChain provides the **core coordinatio
 * OMAChain is governed by OMA3, a Swiss non-profit consortium, ensuring **credible neutrality from day one** (Section 7).  
 * The roadmap (Section 8\)  includes further decentralization of OMAChain’s sequencer and indexing infrastructure, giving the ecosystem more resilience and neutrality over time.
 
-# **3.4 Benefits and Use Cases of the Two-Layer System**
+## **3.4 Benefits and Use Cases of the Two-Layer System**
 
-## The OMA3 two-layer architecture — OMATrust \+ OMAChain — provides practical benefits across the ecosystem. These are not abstract principles; they translate directly into concrete use cases:
+The OMA3 two-layer architecture — OMATrust + OMAChain — provides practical benefits across the ecosystem. These are not abstract principles; they translate directly into concrete use cases:
 
 ### **3.4.1 AI Agents**
 
-## Autonomous agents routinely interact with services—such as APIs for stock prices, medical data, or weather feeds. Before initiating a micropayment to access these services, agents can query OMATrust to verify their legitimacy and compliance. This mitigates fraud risks at machine scale and ensures interactions with trusted endpoints. OMATrust complements systems that enforce post-transaction accountability, such as those verifying payment execution or task completion through mechanisms like slashing or intent-based signing.
+Autonomous agents routinely interact with services—such as APIs for stock prices, medical data, or weather feeds. Before initiating a micropayment to access these services, agents can query OMATrust to verify their legitimacy and compliance. This mitigates fraud risks at machine scale and ensures interactions with trusted endpoints. OMATrust complements systems that enforce post-transaction accountability, such as those verifying payment execution or task completion through mechanisms like slashing or intent-based signing.
 
 ### **3.4.2 Users**
 
-## End users can see verifiable reviews and certifications before downloading an app or trusting a website. Because OMAChain subsidizes attestations, leaving a review or rating is free and seamless — encouraging broader participation and stronger feedback loops.
+End users can see verifiable reviews and certifications before downloading an app or trusting a website. Because OMAChain subsidizes attestations, leaving a review or rating is free and seamless — encouraging broader participation and stronger feedback loops.
 
 ### **3.4.3 Auditors and Certifiers**
 
-## Security firms and compliance bodies can publish proofs directly to the App Registry. Instead of unverifiable PDFs or website badges, attestations are cryptographic and machine-readable. This increases transparency and raises the standard for what it means to be “audited.”
+Security firms and compliance bodies can publish proofs directly to the App Registry. Instead of unverifiable PDFs or website badges, attestations are cryptographic and machine-readable. This increases transparency and raises the standard for what it means to be "audited."
 
 ### **3.4.4 Developers**
 
-## App developers can tokenize their software once in the App Registry, gaining global discoverability. Their app’s reputation — reviews, certifications, and audit attestations — travels with it across ecosystems. This reduces fragmentation and makes onboarding into new marketplaces or environments frictionless.
+App developers can tokenize their software once in the App Registry, gaining global discoverability. Their app's reputation — reviews, certifications, and audit attestations — travels with it across ecosystems. This reduces fragmentation and makes onboarding into new marketplaces or environments frictionless.
 
 ### **3.4.5 Enterprises**
 
-## Enterprises operating APIs in finance, healthcare, or government often require strict compliance (GDPR, HIPAA, SOC2). OMATrust allows these certifications to be cryptographically verified, so integrations can be automated without relying on manual trust assumptions.
+Enterprises operating APIs in finance, healthcare, or government often require strict compliance (GDPR, HIPAA, SOC2). OMATrust allows these certifications to be cryptographically verified, so integrations can be automated without relying on manual trust assumptions.
 
 ## **4\. OMATrust Protocol**
 

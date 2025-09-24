@@ -1,8 +1,6 @@
 # OMATrust Specification
 
-## Decentralized and Permissionless Trust Layer for the Open Internet 
-
-**PRE-DRAFT**
+## Decentralized and Permissionless Trust Layer for the Open Internet
 
 [**Executive Summary	4**](#executive-summary)
 
