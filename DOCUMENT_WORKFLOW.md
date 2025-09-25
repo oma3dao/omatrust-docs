@@ -11,7 +11,7 @@ Our documentation workflow maintains two versions:
 ## 🔄 Complete Workflow
 
 ```
-Google Docs → Export .docx → Convert to Markdown → GitHub → PDF Release
+Google Docs → Export .rtf → Convert to Markdown → GitHub → PDF Release
      ↑              ↓              ↓           ↓         ↓
 Collaboration   Local File    Clean .md    Version    Distribution
    & Review                   Control      Control
@@ -21,28 +21,39 @@ Collaboration   Local File    Clean .md    Version    Distribution
 
 ### Step 1: Export from Google Docs
 1. Open the document in Google Docs
-2. **File → Download → Microsoft Word (.docx)**
+2. **File → Download → Rich Text Format (.rtf)**
 3. Save to your local project folder: `/omatrust-docs/temp/`
-4. Name consistently: `whitepaper-draft-YYYY-MM-DD.docx`
+4. Name consistently: `whitepaper-draft-YYYY-MM-DD.rtf`
 
 ### Step 2: Convert to Markdown
 
-#### Option A: Using Cursor (Recommended)
-1. Open the `.docx` file in Cursor
+#### Option A: Manual Copy-Paste (Recommended - Cross-Platform)
+1. Open the `.rtf` file in any text editor (TextEdit, Notepad, VS Code, etc.)
+2. Select all content and copy
+3. Paste into AI assistant (Claude, ChatGPT, etc.) with conversion prompt below
+4. Apply the style guide mapping
+5. Save result as `.md` file
+
+#### Option B: Using pandoc (Advanced - Cross-Platform)
+1. Install pandoc: [pandoc.org](https://pandoc.org/installing.html)
+2. Convert directly: `pandoc document.rtf -o document.md`
+3. Apply conversion prompt to clean up formatting
+
+#### Option C: Using Cursor (RTF Direct Read)
+1. Open the `.rtf` file directly in Cursor (works on Mac/Windows/Linux)
 2. Use the conversion prompt below
 3. Apply the style guide mapping
 4. Save as `.md` file
 
-#### Option B: Using AI Assistant (Gemini/Claude)
-1. Copy content from `.docx` 
-2. Use the conversion prompt below
-3. Paste result into new `.md` file
+**Note**: RTF conversion produces consistent Unicode typography (including em dashes). This ensures clean diffs between RTF-converted documents.
 
 ### Step 3: Quality Check
-1. Open `.md` file in Cursor
-2. **Press `Cmd+Shift+V`** (Mac) or `Ctrl+Shift+V`** (Windows) for preview
+1. Open `.md` file in Cursor or VS Code
+2. **Preview markdown**: `Cmd+Shift+V` (Mac) or `Ctrl+Shift+V` (Windows)
 3. Verify formatting matches GitHub rendering
 4. Check all code blocks, tables, and links
+5. Verify heading hierarchy is correct
+6. **One-time only**: Handle Unicode consistency if transitioning from non-RTF workflow (see Common Issues section)
 
 ### Step 4: Update Repository
 1. **Update version number** in document header if this is a new release
@@ -64,9 +75,10 @@ When converting from Google Docs to Markdown, apply these rules:
 | **Courier New + Blue Background** | `` ```language `` <br> `` code block `` <br> `` ``` `` | Multi-line code, JSON, commands |
 | **Bold + Any Color** | `**emphasized text**` | Key terms, important concepts |
 | **Italic** | `*italic text*` | Definitions, emphasis |
-| **Heading 1** | `# Main Title` | Document title only |
-| **Heading 2** | `## Section Title` | Major sections (1., 2., 3.) |
-| **Heading 3** | `### Subsection Title` | Subsections (1.1, 2.1, etc.) |
+| **Title** | `# Document Title` | Main document title |
+| **Heading 1** | `## Major Section` | Major sections (1., 2., 3.) |
+| **Heading 2** | `### Subsection Title` | Subsections (1.1, 2.1, etc.) |
+| **Heading 3** | `#### Sub-subsection` | Sub-subsections (1.1.1, 2.1.1, etc.) |
 | **Bullet Points** | `- Item` or `* Item` | Lists |
 | **Numbered Lists** | `1. Item` | Ordered lists |
 | **Tables** | Markdown table syntax | Data presentation |
@@ -148,12 +160,12 @@ omatrust-docs/
 │   ├── specification-v1.0.pdf
 │   └── whitepaper-v1.0.pdf
 └── temp/                     # Working files
-    ├── exports/              # .docx files from Google Docs
+    ├── exports/              # .rtf files from Google Docs
     └── drafts/               # Work-in-progress .md files
 ```
 
 ### Naming Conventions
-- **Google Docs exports**: `document-name-YYYY-MM-DD.docx`
+- **Google Docs exports**: `document-name-YYYY-MM-DD.rtf`
 - **Draft markdown**: `document-name-draft-YYYY-MM-DD.md`
 - **Final markdown**: `document-name.md`
 - **PDF releases**: `document-name-v1.0.pdf`
@@ -202,6 +214,7 @@ Before finalizing any document conversion:
 - [ ] **No emojis used** - maintain professional standards consortium presentation
 - [ ] **Version updated**: Header version (whitepapers) OR Change History table (specifications)
 - [ ] **Date updated** to reflect current month/year
+- [ ] **Unicode consistency**: RTF typography maintained (em dashes, smart quotes) for consistent future diffs
 
 ### Format Check  
 - [ ] Preview in Cursor matches expected GitHub rendering
@@ -218,6 +231,28 @@ Before finalizing any document conversion:
 - [ ] JSON examples properly formatted and valid
 
 ## 🚨 Common Issues & Solutions
+
+### Problem: Massive diffs when transitioning to RTF workflow
+**Cause**: RTF conversion consistently uses Unicode em dashes (—) while existing files may use ASCII hyphens (-)
+
+**Solution**: Accept RTF's consistent formatting rather than fighting it.
+
+**For one-time transition** (if existing files have ASCII hyphens):
+- **Option 1**: Convert existing files to match RTF output (em dashes)
+- **Option 2**: Convert RTF output to match existing files (ASCII hyphens)
+
+**For ongoing workflow**: Choose one approach and stick with it consistently.
+
+**Recommended**: Use em dashes consistently since RTF naturally produces them. This eliminates the need for post-processing and ensures all future RTF conversions will diff cleanly.
+
+**Why it happens**: RTF format standardizes to Unicode typography, including em dashes for better readability
+
+### Problem: Incorrect heading hierarchy
+**Cause**: Sub-subsections (3.2.1, 3.2.2, etc.) converted with wrong number of hash marks
+**Solution**: Verify heading levels match this hierarchy:
+- `##` = Major sections (1, 2, 3, 8, 9)
+- `###` = Subsections (3.1, 3.2, 3.3)
+- `####` = Sub-subsections (3.2.1, 3.2.2, 3.2.3)
 
 ### Problem: Code blocks not rendering
 **Solution**: Ensure three backticks (```) on separate lines
@@ -242,11 +277,13 @@ Before finalizing any document conversion:
 ## 👥 Team Responsibilities
 
 ### Support Team
-- Export documents from Google Docs
-- Run conversion process using provided prompts
+- Export documents from Google Docs (any platform)
+- Run conversion process using provided cross-platform methods
 - Quality check using preview and checklist
 - Update GitHub repository
 - Generate PDFs for releases folder
+
+**Note**: All conversion methods work on Windows, Mac, and Linux. No platform-specific tools required.
 
 ### Technical Team
 - Review technical accuracy of converted documents
