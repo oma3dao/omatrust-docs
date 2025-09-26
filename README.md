@@ -11,8 +11,8 @@ OMATrust is a decentralized verification protocol that enables developers, audit
 
 ## Core Documents
 
-- **[Whitepaper](./whitepaper.md)** - Vision, architecture, and economic model
-- **[Specification](./specification.md)** - Complete technical specification for OMATrust protocol
+- **[Whitepaper](./whitepaper/omatrust-whitepaper.md)** - Vision, architecture, and economic model
+- **[Specification](./specification/omatrust-specification.md)** - Complete technical specification for OMATrust protocol
 - **[PDF Releases](./releases/)** - Downloadable PDF versions of all documents
 
 ## Document Management
@@ -63,7 +63,7 @@ OMATrust follows a **modular architecture** where each repository serves a speci
 - Apps include websites, binaries, mobile apps, APIs, MCP servers, and even agents (see the specification for details)
 - Visit [appregistry.oma3.org](https://appregistry.oma3.org) to tokenize your app, API, or website
 - Review the [registry frontend repository](https://github.com/oma3dao/app-registry-frontend) for integration examples
-- See the [Specification](./specification.md) for supported application types and metadata requirements
+- See the [Specification](./specification/omatrust-specification.md) for supported application types and metadata requirements
 - If you work with an audit firm (SOC 2, pen testing, etc.), encourage them to participate in OMATrust to make your audits verifiable and discoverable
 
 **Integrate review prompts into your applications:**
