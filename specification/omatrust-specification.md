@@ -108,7 +108,7 @@ Every app registry NFT stores the following information associated with an appli
 | dataHash | string | Hash of the JSON returned by dataUrl | None | Y | Y |
 | dataHashAlgorithm | string | The hash algorithm used to compute dataHash. Values: "keccak256", "sha256" | None | Y | Y |
 | traitHashes | \[string\] | A structure of hashed traits.  Implementation is different for each VM. ​​Implementations SHOULD cap on-chain traitHashes to ≤ 20 entries to mirror the off-chain keywords cap, and clients MUST NOT assume more than 20 are indexed.  See Appendix C. | None | N | Y |
-| interfaces | \[enum\] | An unordered set of interface capability codes. Multiple capabilities may be present.  Example: bitmap with 0 \= human2 \= api4 \= smart contract | None | Y | N |
+| interfaces | \[enum\] | An unordered set of interface capability codes. Multiple capabilities may be present.  Example: bitmap with 0 \= human,2 \= api,4 \= smart contract | None | Y | N |
 
 Table 1: Application Registry Onchain Data.
 
@@ -582,7 +582,7 @@ The request returns the following DID Document:
 }
 ```
 
-Here’s an example of the same resolver request to an EVM JSON-RPC node at localhost 127.0.0.1 assuming the Application Resolver smart contract is located at address “0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0” using curl:
+Here’s an example of the same resolver request to an EVM JSON-RPC node at localhost 127.0.0.1 assuming the Application Resolver smart contract is located at address **`0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0`** using curl:
 
 ```shell
 curl -H "Content-Type: application/json" -X POST --data '{"jsonrpc":"2.0","method":"eth_call","params":[0:{"to":"0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0","value":"did:web:upland.me"},1:"latest"]}' 127.0.0.1:8545
@@ -899,7 +899,7 @@ This approach balances decentralized publishing with user trust, enabling permis
 
 | Version | Date | Comments |
 | :---- | :---- | :---- |
-| 0.1 | 2005-09-25 | Initial draft \- Alfred Tom |
+| 0.1 | 2025-09-25 | Initial draft \- Alfred Tom |
 |  |  |  |
 |  |  |  |
 
