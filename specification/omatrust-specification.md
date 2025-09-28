@@ -95,24 +95,26 @@ The Application Registry contract tokenizes applications on the blockchain as an
 
 Every app registry NFT stores the following information associated with an application.
 
-| Field | Format | Description | Ownership Proof | Req? | Mutable? |
-| ----- | ----- | ----- | ----- | ----- | ----- |
-| did | string | See Table 3 | Y | Y | N |
-| fungibleTokenId | string | CAIP-19 token ID | Only if address that minted the ERC-20 contract is different  | N | N |
-| contractId | string | CAIP-10 “gameplay” contract address | Only if address that minted the contract is different  | N | N |
-| versionHistory | \[object\] | Array of released version structs, append only | None | Y | Y |
-| status | enum | Active, deprecated, replaced | None | Y | Y |
-| minter | address | Address of the transaction signer. | Y (built into ERC-721) | Y | N |
-| owner | address | Current owner (built into ERC-721) | N | Y | Y (soulbound optional) |
-| dataUrl | URL | URL to offchain data | Y | Y | Y |
-| dataHash | string | Hash of the JSON returned by dataUrl | None | Y | Y |
-| dataHashAlgorithm | string | The hash algorithm used to compute dataHash. Values: "keccak256", "sha256" | None | Y | Y |
-| traitHashes | \[string\] | A structure of hashed traits.  Implementation is different for each VM. ​​Implementations SHOULD cap on-chain traitHashes to ≤ 20 entries to mirror the off-chain keywords cap, and clients MUST NOT assume more than 20 are indexed.  See Appendix C. | None | N | Y |
-| interfaces | \[enum\] | An unordered set of interface capability codes. Multiple capabilities may be present.  Example: bitmap with 0 \= human,2 \= api,4 \= smart contract | None | Y | N |
+| Field | Format | Description | Req? | Mutable? |
+| ----- | ----- | ----- | ----- | ----- |
+| did | string | See Table 3 | Y | N |
+| fungibleTokenId | string | CAIP-19 token ID | N | N |
+| contractId | string | CAIP-10 contract address | N | N |
+| versionHistory | \[object\] | Array of released version structs, append only | Y | Y |
+| status | enum | Active, deprecated, replaced | Y | Y |
+| minter | address | Address of the transaction signer. | Y | N |
+| owner | address | Current owner (built into ERC-721) | Y | Y (soulbound optional) |
+| dataUrl | URL | URL to offchain data | Y | Y |
+| dataHash | string | Hash of the JSON returned by dataUrl (see 5.1.3.2) | Y | Y |
+| dataHashAlgorithm | string | The hash algorithm used to compute dataHash. Values: "keccak256", "sha256" | Y | Y |
+| traitHashes | \[string\] | A structure of hashed traits.  Implementation is different for each VM. ​​Implementations SHOULD cap on-chain traitHashes to ≤ 20 entries to mirror the off-chain keywords cap, and clients MUST NOT assume more than 20 are indexed.  See Appendix C. | N | Y |
+| interfaces | \[enum\] | An unordered set of interface capability codes. Multiple capabilities may be present.  Example: bitmap with 0 \= human,2 \= api,4 \= smart contract | Y | N |
 
 Table 1: Application Registry Onchain Data.
 
 #### 
+
+All fields listed above require confirmation according to Section 5.1.3.  Confirmation methods vary by field (e.g., ownership confirmation, attestation validation).
 
 #### 5.1.1.1 JSON Format: **`versionHistory`**
 
@@ -156,27 +158,6 @@ The objects in the **`versionHistory`** array have the following fields:
 | a2a | URL | URL to the \~/well-known/agent-card.json endpoint as defined in the A2A standard | N | O | N |
 
 Table 2: Application offchain data.
-
-### 
-
-### 5.1.4 Canonicalization and Hashing
-
-* Parsing JSON objects MUST conform to RFC 8259 (ECMA‑404). Inputs that contain comments, single quotes, NaN/Infinity, trailing commas, or other non‑standard extensions MUST be rejected.  
-* To ensure deterministic dataHash values across implementations, Clients MUST fetch dataUrl, canonicalize the returned JSON using JCS (RFC 8785), compute the digest of the the resulting UTF‑8 bytes using the on-chain **`dataHashAlgorithm`**, and compare it to the on-chain **`dataHash`** value. If they differ, clients MUST treat the manifest as unverified and SHOULD display a warning or hide the app according to UI policy.  
-* Canonicalization (JCS, RFC 8785\) summary:  
-  * Object member names are sorted lexicographically (by Unicode code point).  
-  * Objects are emitted in sorted order; array element order is preserved.  
-  * Numbers are emitted in their minimal form (no leading zeros, no superfluous decimal points or exponents; −0 normalizes to 0).  
-  * Strings are escaped exactly as specified in RFC 8785; no additional Unicode normalization is applied.  
-  * All insignificant whitespace is removed.  
-* Hashing:  
-  * **`dataHash = HASH(canonicalUtf8Bytes) where HASH ∈ { sha256, keccak256 }.`**  
-  * The algorithm used MUST be recorded in **`dataHashAlgorithm`** and the digest MUST be encoded as a 0x‑prefixed lowercase hex string.  
-* Guidance:  
-  * Prefer integers and strings over floats where precision matters to avoid cross‑runtime number formatting issues.  
-  * Implementers SHOULD publish golden test vectors for canonicalization+hashing (covering numbers, escape sequences, object key ordering, and nested structures) and verify cross‑runtime determinism to ensure consistency across implementations. Clients are encouraged to use these vectors to validate their consumption of OMATrust data. See Appendix D for example test vectors to guide implementation.
-
-Note: Contracts do not validate JCS; they only store the algorithm \+ digest. JCS compliance and hash correctness are enforced off-chain by clients and indexers.
 
 ### 5.1.2 Offchain Metadata
 
@@ -385,11 +366,25 @@ JSON example for the **`artifacts`** field:
 
 #### 
 
-#### 5.1.3.1 Application Ownership Confirmation
+OMATrust uses several mechanisms to confirm the validity of data stored in app tokens. Some of these mechanisms are performed by the registry itself, and other mechanisms are performed by the client.
 
-To increase trust in the onchain and offchain data described in an app token, the app owner SHOULD provide proof of ownership of the data.  Clients of the registry SHOULD confirm ownership of certain data provided by the app owner.  This section describes the various mechanisms used for each field.
+#### 5.1.3.1 **`did`** Confirmation
 
-did:web\- if the format of **`did`** is did:web, the owner MUST support the [did:web Method Specification](https://w3c-ccg.github.io/did-method-web/#well-known-did).  This means the owner needs control over the url endpoint to provide the **`did.json`** file.  An example DID Document JSON file:
+OMATrust requires that the developer minting the NFT controls the **`did`**. Although this requires more effort from the developer, it results in higher trust in the system.  **`did`** ownership confirmation consists of the following steps: 
+
+1. The app owner proves to an approved Issuer that it owns the **`did`**.  See below for proof mechanisms based on the format of the ID.    
+2. Issuer submits an attestation to the Resolver contract (Section 5.2).  
+3. Registry contract calls the Resolver contract.  If the proper attestations are in place, the token is registered.  If not, the registration fails.  See Section 5.1.6 for how conflicts, TTL, and revocations are handled.
+
+Clients MAY also check ownership of **`did`** and other metadata values.  The following sections describe how ownership is proven for various types of IDs.
+
+Note: Ownership confirmation occurs at mint time. However, control of a contract or token can change later (for example, a proxy admin may be transferred, or a mint authority may be revoked). Clients that depend on ongoing correctness SHOULD re-verify ownership through the Resolver (see Section 5.1.6) if these changes are relevant to their use case.
+
+##### 5.1.3.1.1 **`did:web`** Confirmation
+
+If the format of **`did`** is did:web, the owner MUST support the [did:web Method Specification](https://w3c-ccg.github.io/did-method-web/#well-known-did) and return a JSON object at the following URL, where url is the URL specified in the **`did`**: **`[url]/.well-known/did.json.`**
+
+This object is called a DID Document.  Here is an example DID Document:
 
 ```json
 {
@@ -412,12 +407,15 @@ did:web\- if the format of **`did`** is did:web, the owner MUST support the [did
 }
 ```
 
-Before tokenizing an application with a **`did`** of did:web, the owner MUST get an attestation from an approved issuer that checks that the JSON object returned by **`[url]/.well-known/did.json`** contains the address that will mint the token.  The issuer MUST retrieve the DID Document located at **`[url]/.well-known/did.json`** and verify that the owner address appears as an array element of the **`verificationMethod`** field in the DID Document returned by the endpoint.  The app registry minting function requires this attestation before allowing the mint to continue.
+Once this endpoint is implemented, the owner MUST get an attestation from an approved Issuer.  The Issuer MUST retrieve the DID Document located at **`[url]/.well-known/did.json`** and verify that the owner address appears as an array element of the **`verificationMethod`** field in the DID Document returned by the endpoint.  
 
-The client reading the **`did`** field SHOULD independently confirm that the owner of the NFT matches the address contained in **`blockchainAccountId`**.
+The client MAY use this same method to verify the owner controls the **`did`**.
 
-did:pkh: This DID method is for tokenizing a smart contract application. Smart contracts do not need to be tokenized in order for users to file attestations on them. Attestations can be filed directly with an attestation service using the DID → Index Address Mapping method (see below). Tokenizing a smart contract is primarily for discovery and usage information.  
-If a smart contract is tokenized, the issuer MUST confirm that the address minting the smart contract token is controlled by the same entity that either administered or deployed the contract:
+##### 5.1.3.1.2 **`did:pkh`** Confirmation
+
+This DID method is used to tokenize a smart contract application. Smart contracts do not need to be tokenized in order for users to file attestations on them. Attestations can be filed directly with an attestation service using the DID → Index Address Mapping method (see below). Tokenizing a smart contract is primarily for discovery and usage information. 
+
+If a smart contract is tokenized, the Issuer MUST confirm that the address minting the smart contract token is controlled by the same entity that either administered or deployed the contract.  For EVM contracts:
 
 * If the contract has an admin, the admin control address MUST be used.  
 * If the contract is immutable, the deploying address MUST be used.
@@ -437,21 +435,26 @@ If a smart contract is tokenized, the issuer MUST confirm that the address minti
    * The address that minted the registry token MUST equal the controlling address derived above.  
    * If they match, ownership is verified.  
 3. Fallback: attestation path  
-   * If the registry token is to be minted by a different address (e.g., a multisig, DAO, or delegated key) than the controlling address, the issuer MUST make an attestation binding the minting address to the controlling address.  
-   * Clients SHOULD accept such an attestation only if it is issued by a trusted issuer.  
+   * If the registry token is to be minted by a different address (e.g., a multisig, DAO, or delegated key) than the controlling address, the Issuer MUST make an attestation binding the minting address to the controlling address (Section 5.3.5.1).  
+   * Clients SHOULD accept such an attestation only if it is issued by a trusted Issuer.  
 4. Failure to verify  
    * If no match is found and no valid attestation is present, clients MUST treat the tokenized contract as unverified.
 
-Wallet-based DIDs:  If **`did`** uses a DID method that leverages public keys (e.g.- a wallet address), the client should check that either:
+For non-EVM contracts, the Issuer MUST use the appropriate verification mechanism for the appropriate non-EVM virtual machine.
 
-1. The DID is derived from the same key as the owner address that minted the NFT, or  
-2. There is an attestation (see did:pkh above) that proves the owner controls both the DID key and the minting key.
+#### 5.1.3.2 **`contractId`** and **`fungibleTokenId`** Confirmation
 
-Other DIDs:  Other did method verification where the did value doesn’t match the owner:  TBD
+These CAIP-10 fields SHOULD be confirmed by the client using the same mechanisms the Issuer follows when confirming a did:pkh DID as described in Section 5.1.3.1.2.
 
 #### 
 
-#### 5.1.3.2 DataURL Confirmation
+#### 5.1.3.3 **`dataURL`** Confirmation
+
+##### 5.1.3.3.1 **`dataHash`** Check
+
+Clients MUST fetch **`dataUrl`**, canonicalize the returned JSON (see 5.1.3.4.2), compute the digest of the the resulting UTF‑8 bytes using the on-chain **`dataHashAlgorithm`** (see 5.1.3.4.3), and compare it to the on-chain **`dataHash`** value. If they differ, clients MUST treat the manifest as unverified and SHOULD display a warning or hide the app according to UI policy
+
+##### 5.1.3.3.2 **`dataURL`** Ownership
 
 The JSON returned by the **`dataUrl`** API endpoint MUST contain the **`owner`** field, and its value MUST match the NFT owner address.  Furthermore, the owner SHOULD ensure the existence of a trusted third-party attestation that verifies certain dataUrl fields such as:
 
@@ -465,19 +468,48 @@ The JSON returned by the **`dataUrl`** API endpoint MUST contain the **`owner`**
 * 3dAssetUrls  
 * external\_url
 
-#### 5.1.3.3 Other URL Confirmation
+##### 5.1.3.3.3 Other URL Confirmation
 
-* URLs that use a domain that has already been verified by the above did:web method do not need to be re-verified.    
+The dataUrl object could contain URL fields.  The client MAY confirm the ownership of these URLs as well using one of the following mechanisms:
+
+* URLs that use a domain that has already been verified in Section 5.1.3.1.1 or Section 5.1.3.3.2 do not need to be re-verified.    
     
-* All other URLs SHOULD be verified using the same mechanism to verify did:web DIDs or by checking a Linked Identifier attestation.   
-    
+* All other URLs MAY be verified using the same mechanism to verify did:web DIDs or by checking a Linked Identifier attestation (Section 5.3.5.1). 
+
+For URLs that point to media:
+
 * Clients SHOULD place higher trust in content addressable URLs such as IPFS or Filecoin URLs, as the content in these URLs cannot be changed without changing the URL.
 
-* If the URL returns a media file, the media file MAY have the owner address embedded in the file in some manner.  
-    
-* URLs that cannot be verified SHOULD be treated with caution. 
+* If the URL returns a media file, the media file MAY have the owner address embedded in the file in some manner.
 
 ### 
+
+#### 5.1.3.4 JSON Policies
+
+##### 5.1.3.4.1 JSON Parsing
+
+Parsing JSON objects MUST conform to RFC 8259 (ECMA‑404). Inputs that contain comments, single quotes, NaN/Infinity, trailing commas, or other non‑standard extensions MUST be rejected.
+
+##### 5.1.3.4.2 JSON Canonicalization
+
+To ensure deterministic **`dataHash`** values across implementations, the **`dataUrl`** MUST be canonicalized using JCS (RFC 8785). Canonicalization (JCS, RFC 8785\) summary:
+
+* Object member names are sorted lexicographically (by Unicode code point).  
+* Objects are emitted in sorted order; array element order is preserved.  
+* Numbers are emitted in their minimal form (no leading zeros, no superfluous decimal points or exponents; −0 normalizes to 0).  
+* Strings are escaped exactly as specified in RFC 8785; no additional Unicode normalization is applied.  
+* All insignificant whitespace is removed.
+
+##### 5.1.3.4.3 JSON Hashing
+
+**`dataHash = HASH(canonicalUtf8Bytes)`** where **`HASH`** is the algorithm specified in **`dataHashAlgorithm`**.  The algorithm used MUST be recorded in **`dataHashAlgorithm`** and the digest MUST be encoded as a 0x‑prefixed lowercase hex string.
+
+##### 5.1.3.4.3 Other Guidance
+
+* Prefer integers and strings over floats where precision matters to avoid cross‑runtime number formatting issues.  
+* Implementers SHOULD publish golden test vectors for canonicalization+hashing (covering numbers, escape sequences, object key ordering, and nested structures) and verify cross‑runtime determinism to ensure consistency across implementations. Clients are encouraged to use these vectors to validate their consumption of OMATrust data. See Appendix D for example test vectors to guide implementation.
+
+Note: Contracts do not validate JCS; they only store the algorithm \+ digest. JCS compliance and hash correctness are enforced off-chain by clients and indexers.
 
 ### 5.1.4 Control Policy
 
@@ -600,12 +632,12 @@ DID ownership is verified at token minting time. OMA3 uses a dedicated Resolver 
 
 ### **Process**
 
-1. **First Attestation:** The owner of a DID gets an attestation from an approved issuer to that confirms ownership of the DID.  This confirmation process can be manual (e.g.- in conjunction with a cybersecurity audit) or automatic (e.g.- a server that checks **`.well-known/did.json`** programmatically).  The Resolver contract holds the attestation onchain.  
+1. **First Attestation:** The owner of a DID gets an attestation from an approved Issuer to that confirms ownership of the DID.  This confirmation process can be manual (e.g.- in conjunction with a cybersecurity audit) or automatic (e.g.- a server that checks **`.well-known/did.json`** programmatically).  The Resolver contract holds the attestation onchain.  
      
 2. **First Mint:** With the ownership attestation in place, the owner mints the application with the wallet address in the attestation.  The Resolver contract checks the attestation before confirming the mint.  
      
 3. **Challenge:** A challenger may attempt to rebind a DID by minting the same DID/version combination.   
-   * The challenger MUST either ask the original issuer to reverse the attestation (issuing a new attestation) or enlist at least two other approved issuers to attest to the challenger’s ownership of the DID in question.  The Resolver compares the challenger’s attestation score against the incumbent’s.  
+   * The challenger MUST either ask the original Issuer to reverse the attestation (issuing a new attestation) or enlist at least two other approved issuers to attest to the challenger’s ownership of the DID in question.  The Resolver compares the challenger’s attestation score against the incumbent’s.  
    * Scores are based on the count of valid, non-revoked attestations from an approved list of issuers.  
    * Only attestations older than a global maturation delay (e.g., 72h) count toward scores, creating a rolling challenge window.  
        
@@ -696,7 +728,7 @@ Example query flow:
 When storing an attestation about a DID in EAS:
 
 * The **`recipient`** field MUST equal the computed **`indexAddress(did)`*****.*  
-* The attestation payload MUST include **`subjectDidHash`**, which is exactly the **`didHash`** derived during Index Address computation.
+* The attestation payload MUST include **`subjectDidHash`**, which is exactly the **`didHash`** derived during Index Address computation (see Section 5.1.3.4.3) 
 
 Example Schema: **`Oma3UserReview@1`**
 
@@ -748,7 +780,7 @@ Below are some Linked Identifier schema field values and verification processes 
 
 | Field | Value | Description |
 | ----- | ----- | ----- |
-| Issuer ID | Wallet address | ID of the attester/issuer |
+| Issuer ID | Wallet address | ID of the attester/Issuer |
 | Holder ID | DID, wallet address, or Web3 domain | ID of the Application |
 | Linked ID | Wallet address | Wallet address of Application owner |
 | AttestationDate | block.timestamp |  |
@@ -898,9 +930,9 @@ This approach balances decentralized publishing with user trust, enabling permis
 # Change History
 
 | Version | Date | Comments |
-| :---- | :---- | :---- |
+| ----- | ----- | :---- |
 | 0.1 | 2025-09-25 | Initial draft \- Alfred Tom |
-|  |  |  |
+| 0.2 | 2025-09-28 | Clarified data confirmation mechanisms |
 |  |  |  |
 
 # Appendix A
@@ -913,7 +945,7 @@ Provisional DID method used within this specification to identify verifiable pay
 
 **`did:artifact`** is a content-addressable identifier. The method-specific ID is a CIDv1 (multibase base32-lower) whose multihash encodes the hash algorithm and digest of the artifact’s bytes.
 
-**V1 requirement:** the multihash MUST be sha2-256 (32-byte digest).
+**V1 requirement:** the multihash MUST be SHA-256 (32-byte digest- see Section 5.1.3.4.3).
 
 * Binaries/containers: hash the file/image bytes.  
 * Websites: hash a proof artifact (e.g., JCS-canonicalized SRI manifest JSON, or a site snapshot archive).  
@@ -928,7 +960,7 @@ did:artifact:<cidv1>
 ```
 
 * **`<cidv1>`** MUST be CIDv1 encoded with multibase base32-lower.  
-* The CID’s multihash MUST use sha2-256 under this spec version.  
+* The CID’s multihash MUST use SHA-256 under this spec version (5.1.3.4.3).  
 * The multicodec SHOULD be **`raw`** for opaque bytes. Using a more specific codec does not change verification semantics.
 
 ## 
@@ -938,7 +970,7 @@ did:artifact:<cidv1>
 **Common procedure (all artifact types):**
 
 1. Obtain the exact artifact bytes (after any required canonicalization for that type).  
-2. Compute SHA-256 over those bytes.  
+2. Compute SHA-256 over those bytes (5.1.3.4.3).  
 3. Wrap as multihash (function code \+ length \+ digest).  
 4. Build **`CIDv1`** (multicodec **`raw`** unless specified otherwise).  
 5. Multibase-encode (base32-lower) → prepend **`did:artifact:`**.
@@ -957,7 +989,7 @@ did:artifact:<cidv1>
 When a record references an **`artifactDid`**, verifiers MUST:
 
 1. Fetch bytes from any location (HTTP(S), ipfs://, local, etc.).  
-2. Recompute CIDv1(sha2-256) per A.3.  
+2. Recompute CIDv1(SHA-256- Section 5.1.3.4.3) per A.3.  
 3. Require equality with the referenced **`artifactDid`**. If different → invalid, regardless of URL or signature.
 
 **Websites:**
@@ -984,7 +1016,7 @@ When a record references an **`artifactDid`**, verifiers MUST:
 
 ## **A.6 Policy (V1)**
 
-* **Allowed hash:** only sha2-256 is permitted for producing **`did:artifact`** values under this spec version. Verifiers MUST read the multihash algorithm but MUST reject non-permitted algorithms.  
+* **Allowed hash:** only SHA-256 is permitted for producing **`did:artifact`** values under this spec version. Verifiers MUST read the multihash algorithm but MUST reject non-permitted algorithms.  
 * **Website scope:** website proof artifacts MUST be scoped to an apex origin; cross-origin redirects MUST NOT be followed during attestation/verification.  
 * **Caching:** verifiers MAY cache computed CIDs; any new download MUST be re-verified.
 
