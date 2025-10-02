@@ -382,7 +382,9 @@ Note: Ownership confirmation occurs at mint time. However, control of a contract
 
 ##### 5.1.3.1.1 **`did:web`** Confirmation
 
-If the format of **`did`** is did:web, the owner MUST support the [did:web Method Specification](https://w3c-ccg.github.io/did-method-web/#well-known-did) and return a JSON object at the following URL, where url is the URL specified in the **`did`**: **`[url]/.well-known/did.json.`**
+If the format of **`did`** is did:web, the owner MUST support one of the following methods to verify their ownership of the domain.
+
+* [**did:web URL**](https://w3c-ccg.github.io/did-method-web/#well-known-did):  owners MUST return a JSON object at the following URL, where url is the URL specified in the **`did`**: **`[url]/.well-known/did.json.`**
 
 This object is called a DID Document.  Here is an example DID Document:
 
@@ -407,9 +409,23 @@ This object is called a DID Document.  Here is an example DID Document:
 }
 ```
 
-Once this endpoint is implemented, the owner MUST get an attestation from an approved Issuer.  The Issuer MUST retrieve the DID Document located at **`[url]/.well-known/did.json`** and verify that the owner address appears as an array element of the **`verificationMethod`** field in the DID Document returned by the endpoint.  
+To verify this method, the Issuer MUST retrieve the DID Document located at **`[url]/.well-known/did.json`** and verify that the owner address appears as an array element of the **`verificationMethod`** field in the DID Document returned by the endpoint.
 
-The client MAY use this same method to verify the owner controls the **`did`**.
+* **dns:\<domain\>**: The identifier "dns:\<domain\>" asserts control of \<domain\> via a DNS TXT record.  The Owner MUST publish a TXT record at:   **`_omatrust.<domain>`**. The TXT value MUST be a sequence of key=value pairs separated by spaces:
+
+  v=1        (protocol version, fixed to "1")
+
+  caip10=...   (one or more identifiers in CAIP-10 format)
+
+
+Examples:
+
+```
+v=1 caip10=eip155:1:0x89a932207c485f85226d86f7cd486a89a24fcc12
+v=1 caip10=eip155:1:0x1111... caip10=eip155:1:0x2222...
+```
+
+Multiple caip10 values indicate co-controllers. For rotation, both old and new controllers SHOULD be published during an overlap period. If the apex cannot be modified, the record MAY be published on a subdomain (e.g., id.example.com), in which case the identifier string is **`dns:id.example.com`**. Issuers MUST query authoritative name servers and SHOULD validate DNSSEC when available. The wallet proven by signed challenge (§5.3) MUST match one of the caip10 values.
 
 ##### 5.1.3.1.2 **`did:pkh`** Confirmation
 
@@ -632,7 +648,7 @@ DID ownership is verified at token minting time. OMA3 uses a dedicated Resolver 
 
 ### **Process**
 
-1. **First Attestation:** The owner of a DID gets an attestation from an approved Issuer to that confirms ownership of the DID.  This confirmation process can be manual (e.g.- in conjunction with a cybersecurity audit) or automatic (e.g.- a server that checks **`.well-known/did.json`** programmatically).  The Resolver contract holds the attestation onchain.  
+1. **First Attestation:** The owner of a DID gets an attestation from an approved Issuer to that confirms ownership of the DID.  This confirmation process can be manual (e.g.- in conjunction with a cybersecurity audit) or automatic (e.g.- a server that checks **`.well-known/did.json`** programmatically).  The Resolver contract holds the attestation onchain.    
      
 2. **First Mint:** With the ownership attestation in place, the owner mints the application with the wallet address in the attestation.  The Resolver contract checks the attestation before confirming the mint.  
      
@@ -933,7 +949,7 @@ This approach balances decentralized publishing with user trust, enabling permis
 | ----- | ----- | :---- |
 | 0.1 | 2025-09-25 | Initial draft \- Alfred Tom |
 | 0.2 | 2025-09-28 | Clarified data confirmation mechanisms |
-|  |  |  |
+| 0.3 | 2025-10-02 | Introduced TXT DNS domain verification |
 
 # Appendix A
 
