@@ -108,7 +108,7 @@ Every app registry NFT stores the following information associated with an appli
 | dataHash | string | Hash of the JSON returned by dataUrl (see 5.1.3.2) | Y | Y |
 | dataHashAlgorithm | string | The hash algorithm used to compute dataHash. Values: "keccak256", "sha256" | Y | Y |
 | traitHashes | \[string\] | A structure of hashed traits.  Implementation is different for each VM. ​​Implementations SHOULD cap on-chain traitHashes to ≤ 20 entries to mirror the off-chain keywords cap, and clients MUST NOT assume more than 20 are indexed.  See Appendix C. | N | Y |
-| interfaces | \[enum\] | An unordered set of interface capability codes. Multiple capabilities may be present.  Example: bitmap with 0 \= human,2 \= api,4 \= smart contract | Y | N |
+| interfaces | \[enum\] | An unordered set of interface capability codes. Multiple capabilities may be present.  Example: if using a bitmap, bit 0 \= human, bit 1 \= api, and bit 2 \= smart contract. | Y | N |
 
 Table 1: Application Registry Onchain Data.
 
@@ -141,21 +141,19 @@ The objects in the **`versionHistory`** array have the following fields:
 | description | string | Long description of the application.  Max 4000 chars. Matches ERC-721 metadata extension. | Y | Y | Y |
 | publisher | string | Publisher name. | Y | Y | Y |
 | summary | string | Short description of the application.  Max 80 chars. | Y | O | O |
-| owner | string | CAIP-10 address of the owner of the app token NFT.  Used to confirm ownership of the dataUrl JSON (see “Field Confirmation” below). | Y | Y | Y |
+| owner | string | Address of the owner of the app token NFT.  Used to confirm ownership of the dataUrl JSON (see “Field Confirmation” below). Format is VM-dependent.  EVM is “address”. | Y | Y | Y |
 | screenshotUrls | \[URL\] | JSON urls field contains an array of URLs to screenshot images. | Y | N | N |
 | videoUrls | \[URL\] | JSON urls field contains an array of URLs to videos. | O | N | N |
 | 3dAssetUrls | \[URL\] | JSON urls field contains an array of URLs to 3D assets (GLB, USDZ, etc.). | O | N | N |
 | legalUrl | URL | URL to legal agreements like license, terms of service, privacy policy, etc. | O | O | O |
 | supportUrl | URL | URL to get support. | O | O | O |
-| iwpsPortalUrl | URL | See [IWPS Spec](https://github.com/oma3dao/iwps-specification). | O | O | N |
+| iwpsPortalUrl | URL | See [IWPS Spec](https://github.com/oma3dao/iwps-specification). | O | O | O |
 | traits | \[string\] | An array of max 20 traits and the total char count cannot exceed 120\. See Appendix C. | O | O | O |
 | interfaceVersions | \[string\] | Array of supported versions of the interface | N | O | O |
 | platforms | JSON | Object of platforms supported by the app. | Y | N | N |
 | endpoint | JSON | Details on the API endpoint (see below) | N | Y | O |
-| payments | \[JSON\] | Array of payment mechanisms (see below).  If this exists then payment is required to use the service. | O | O | N |
 | artifacts | JSON | Allows clients to verify content (e.g.- binaries) | O | O | N |
 | mcp | JSON | Implements the MCP server specification (see below) | N | O | N |
-| a2a | URL | URL to the \~/well-known/agent-card.json endpoint as defined in the A2A standard | N | O | N |
 
 Table 2: Application offchain data.
 
@@ -197,31 +195,13 @@ The **`endpoint`** JSON object contains the following fields:
 | Value | Format | Description | Required |
 | ----- | ----- | ----- | ----- |
 | url | string | URL of the endpoint | Y |
-| format | string | See Appendix C | O |
-| schemaUrl | string | URL to API documentation | O |
+| schemaUrl | string | URL to API schema or documentation | O |
 
 For **`interface`** \= 4 (contracts), the chain ID is taken from the DID (did:pkh with CAIP-10 ID). Clients can then determine the format the RPC endpoint requires based on the chain ID. 
 
 #### 
 
-#### 5.1.2.3 JSON Format: **`dataUrl.payments`**
-
-The **`payment`** array contains at least one JSON object if payment is required.  The possible JSON objects are differentiated by the **`type`** field.  There are currently only two possible values for the **`type`** field: **`x402`** and **`manual`**.  The below tables describe these two objects.
-
-| Value | Format | Description | Required |
-| ----- | ----- | ----- | ----- |
-| type | string | “x402” | Y |
-| url | string | Base URL of the x402 endpoint. Clients SHOULD call GET {url}/supported for live tuples (source of truth). If this field is not present, use *dataUrl.endpoint*. | O |
-| chains | \[string\] | CAIP‑2 chain IDs this service supports. | O |
-
-| Value | Format | Description | Required |
-| ----- | ----- | ----- | ----- |
-| type | string | “manual” | Y |
-| url | string | Describes pricing information and payment mechanics. | O |
-
-#### 
-
-#### 5.1.2.4 JSON Format: **`dataUrl.mcp`**
+#### 5.1.2.3 JSON Format: **`dataUrl.mcp`**
 
 This object represents the MCP specification and gives agents the information they need to interface with an MCP server.  The reader is referred to the specification of MCP v1.0 (modelcontextprotocol.io, Section 3, Server Metadata), which has descriptions of each field and is incorporated by reference.  
 
@@ -237,7 +217,7 @@ The following are the JSON fields for the **`mcp`** field:
 
 ##### 
 
-##### 5.1.2.4.1 JSON Format: **`dataUrl.mcp.tools`**
+##### 5.1.2.3.1 JSON Format: **`dataUrl.mcp.tools`**
 
 The **`tools`** array contains JSON objects with the following fields:
 
@@ -250,7 +230,7 @@ The **`tools`** array contains JSON objects with the following fields:
 
 ##### 
 
-##### 5.1.2.4.2 JSON Format: **`dataUrl.mcp.resources`**
+##### 5.1.2.3.2 JSON Format: **`dataUrl.mcp.resources`**
 
 The **`resources`** array contains JSON objects with the following fields:
 
@@ -263,7 +243,7 @@ The **`resources`** array contains JSON objects with the following fields:
 
 ##### 
 
-##### 5.1.2.4.3 JSON Format: **`dataUrl.mcp.prompts`**
+##### 5.1.2.3.3 JSON Format: **`dataUrl.mcp.prompts`**
 
 The **`prompts`** array contains JSON objects with the following fields:
 
@@ -275,7 +255,7 @@ The **`prompts`** array contains JSON objects with the following fields:
 
 ##### 
 
-##### 5.1.2.4.4 JSON Format: **`dataUrl.mcp.transport`**
+##### 5.1.2.3.4 JSON Format: **`dataUrl.mcp.transport`**
 
 The **`transport`** JSON object contains the following fields:
 
@@ -286,7 +266,7 @@ The **`transport`** JSON object contains the following fields:
 
 ##### 
 
-##### 5.1.2.4.5 JSON Format: **`dataUrl.mcp.authentication`**
+##### 5.1.2.3.5 JSON Format: **`dataUrl.mcp.authentication`**
 
 The **`authentication`** JSON object contains the following fields:
 
@@ -297,7 +277,7 @@ The **`authentication`** JSON object contains the following fields:
 
 #### 
 
-#### 5.1.2.5 JSON Format: **`dataUrl.artifacts`**
+#### 5.1.2.4 JSON Format: **`dataUrl.artifacts`**
 
 **`artifacts`** is a JSON map keyed by the value of **`artifactDid`** (see Appendix A). It carries integrity and distribution details for any verifiable payload referenced from **`dataUrl.platforms`**.
 
@@ -436,7 +416,9 @@ If a smart contract is tokenized, the Issuer MUST confirm that the address minti
 * If the contract has an admin, the admin control address MUST be used.  
 * If the contract is immutable, the deploying address MUST be used.
 
- Verification can be done as follows:
+There are several ways verification can be done:
+
+ Address Matching:
 
 1. Determine the controlling address of the contract  
    * Upgradeable contracts:  
@@ -457,6 +439,62 @@ If a smart contract is tokenized, the Issuer MUST confirm that the address minti
    * If no match is found and no valid attestation is present, clients MUST treat the tokenized contract as unverified.
 
 For non-EVM contracts, the Issuer MUST use the appropriate verification mechanism for the appropriate non-EVM virtual machine.
+
+In cases where a controller cannot host a verification document or use a DNS-based proof, ownership may be established through an on-chain transfer that publicly demonstrates control of the administrative wallet associated with the contract’s DID. This method provides a verifiable, virtual-machine-agnostic mechanism that works across multiple blockchain types.
+
+**Overview**  
+The administrative wallet (referred to as the “admin wallet”) proves its control over a contract by performing a minimal on-chain native token transfer. The transfer is constructed so that it can be programmatically verified by an Issuer and permanently tied to both the contract DID and the login wallet used to interact with OMA3 systems.
+
+**A. EVM Chains (eip155)**  
+For chains following the EVM model, proof of control is established by sending any amount of the native token directly from the admin wallet to the login wallet address on the same chain. The existence of this transaction is sufficient evidence that the admin wallet controls the private key capable of managing the contract.  
+The Issuer verifies the transaction by checking that:
+
+1. The transaction originates from the admin wallet.  
+2. The recipient address matches the login wallet used to authenticate to OMA3.  
+3. The transaction occurred after the time the ownership verification process was initiated.  
+4. The transaction has reached the minimum required number of confirmations for that chain.  
+5. The admin wallet currently retains administrative control of the contract (via the owner, proxy-admin slot, or equivalent mechanism).
+
+If the contract’s controller is itself a smart contract that cannot originate arbitrary native transfers (for example, a timelock or multisig vault), the Issuer must instead rely on a recognized chain-native signature method such as ERC-1271, or a governance attestation signed by the controlling entity.
+
+**B. Non-EVM Chains (Sink-based Proof)**  
+For non-EVM chains, or any chain where direct wallet-to-wallet transfers are not practical, OMA3 operates a designated sink address specific to each supported chain. The admin wallet demonstrates control by sending a deterministic, verifiable amount of the native token to that sink address.
+
+The amount sent is derived deterministically from public information so that no server-issued nonce is required. The formula is:
+
+amount \= BASE(chainKey) \+ ( uint256( keccak256("OMATrust|v1|" \+ lower(loginWallet) \+ "|" \+ contractDid \+ "|" \+ chainKey) ) mod RANGE(chainKey) )
+
+Where:  
+• BASE(chainKey) is a per-chain minimum chosen to exceed dust thresholds.  
+• RANGE(chainKey) defines the upper bound of variation for the amount.  
+• lower(loginWallet) is the lowercase login wallet address registered with OMA3.  
+• contractDid is the DID of the contract being verified.  
+• chainKey identifies the chain using its CAIP-2 reference.
+
+The Issuer validates the transaction by confirming that:
+
+1. The transfer originates from the admin wallet and targets the correct OMA3 sink address for that chain.  
+2. The transferred amount matches the computed deterministic value.  
+3. The transaction occurred after the ownership-verification initiation time and within the defined validity window.  
+4. The transaction has the minimum number of confirmations required by that chain.  
+5. The admin wallet continues to control the contract at the time of verification.
+
+**C. Verification Results**  
+Once the required transaction is detected and validated, the Issuer records a Controller Link attestation containing:  
+– the verification method used (“evm-direct” or “sink-amount”),  
+– the chain identifier,  
+– the contract DID,  
+– the admin wallet address,  
+– the login wallet address,  
+– the transaction hash and block number, and  
+– the observation and expiry timestamps.
+
+**D. Security and Operational Notes**  
+• This method produces a public, on-chain association between the admin and login wallets; such visibility is intentional.  
+• No approvals or contract interactions are required—only a simple native token transfer.  
+• The transferred amounts are intentionally minimal and above dust limits.  
+• OMA3 may periodically sweep funds from sink addresses as needed; these operations do not affect verification validity.  
+• If multiple valid proofs exist for the same contract DID, the most recent proof supersedes earlier ones.
 
 #### 5.1.3.2 **`contractId`** and **`fungibleTokenId`** Confirmation
 
@@ -565,80 +603,6 @@ When enabled, transfers and approvals MUST be rejected; minting and burning rema
 API impact: No new fields are required (mode can be implicit or a boolean per token), but behavior MUST be observable via a read method, e.g., isSoulbound(tokenId).
 
 UI guidance: Stores SHOULD visually label soulbound apps.
-
-### 5.1.6 App Registry API
-
-The Application Registry API allows developers to access the Application Registry.  The API provides native blockchain JSON-RPC smart contract APIs (recommended) and a web2 API.  The OMATrust Registry contract supports the following functions:
-
-* **`mint`**: mints an Application.  
-* **`updateStatus`**:  updates the status of an Application.  
-* **`getAppsByStatus`**:  gets all the Applications (with pagination) of a certain status.  
-* **`getApps`**:  gets all Applications with ACTIVE status.  
-* **`getAppDIDsByStatus`**:  returns a list of Application DIDs of a certain status.  
-* **`getAppDIDs`**: returns a list of Application DIDs with ACTIVE status.  
-* **`getAppsByMinter`**:  gets all the Applications minted by an address.  
-* **`getApp`**: returns an Application object given a DID.  
-* **`getDIDDocument`**:  returns an Application is DID Document format given a DID.
-
-To put data on the Application Registry a developer must send a signed transaction to the Application Registry’s **`mint`** smart contract function through a native RFC endpoint of the contract (most often through an [OMA3 front end website](https://appregistry.oma3.org)).  The transaction MUST include the required parameters in Table 1\.  The transaction MAY include one or more of the optional parameters in Table 1\.
-
-The Application Registry DID standard API returns a DID Document using a DID Resolver.  Here’s an example of a DID Resolver request to a REST API using curl asking for a DID Document given an Application DID:
-
-```shell
-curl -X GET https://appresolver.oma3.org/1.0/identifiers/did:web:upland.me
-```
-
-The request returns the following DID Document:
-
-```json
-{
-  "@context": [
-    "https://www.w3.org/ns/did/v1"
-  ],
-  "id": "did:web:upland.me",
-  "verificationMethod": [
-    {
-      "id": "did:web:upland.me",
-      "type": "EcdsaSecp256k1VerificationKey2019",
-      "controller": "did:web:123456789abcdef",
-      "publicKeyBase58": "04a34b8b56cf4d... "
-    }
-  ],
-  "authentication": [
-    "did:ethr:0x123456789abcdef#key-2"
-  ],
-  "service": [
-    {
-      "id": "did:example:123456789abcdef#metadata",
-      "type": "MetadataService",
-      "serviceEndpoint": {
-        "name": "Upland",
-        "version": 1.0,
-        "icon-url": "https://upland.me/icon",
-        "status": "active",
-        "iwps-portal-url": "https://upland.me/iwps-portal-api",
-        "description": "A web3 property game",
-        "screenshots": [
-          "https://example.com/screenshot1.png",
-          "https://example.com/screenshot2.png"
-        ],
-        "owner-address": "did:ons:upland.realm",
-        "application-token": "8g82898g98234-ba..."
-      }
-    }
-  ]
-}
-```
-
-Here’s an example of the same resolver request to an EVM JSON-RPC node at localhost 127.0.0.1 assuming the Application Resolver smart contract is located at address **`0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0`** using curl:
-
-```shell
-curl -H "Content-Type: application/json" -X POST --data '{"jsonrpc":"2.0","method":"eth_call","params":[0:{"to":"0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0","value":"did:web:upland.me"},1:"latest"]}' 127.0.0.1:8545
-```
-
-The request returns the same DID Document as the REST API call.  
-
-Reputation Integration:  TBD
 
 ## 5.2 Ownership Resolver Contract
 
@@ -950,6 +914,7 @@ This approach balances decentralized publishing with user trust, enabling permis
 | 0.1 | 2025-09-25 | Initial draft \- Alfred Tom |
 | 0.2 | 2025-09-28 | Clarified data confirmation mechanisms |
 | 0.3 | 2025-10-02 | Introduced TXT DNS domain verification |
+| 0.4 |  | Removed 5.1.6, dataUrl.endpoint.format, dataUrl.a2a, and payments |
 
 # Appendix A
 
@@ -1215,6 +1180,7 @@ This appendix provides a list of recommended trait strings for use in the on-cha
 | "token:transferable" | Include this if the token in the fungibleTokenId is transferable. |
 | "token:burnable" | Include this if the token in the fungibleTokenId is burnable. |
 | “pay:x402” | Include this if the endpoint supports x402 payments. |
+| “pay:manual” | Include this if the endpoint supports traditional payments. |
 
 # Appendix D
 
