@@ -391,7 +391,7 @@ This object is called a DID Document.  Here is an example DID Document:
 
 To verify this method, the Issuer MUST retrieve the DID Document located at **`[url]/.well-known/did.json`** and verify that the owner address appears as an array element of the **`verificationMethod`** field in the DID Document returned by the endpoint.
 
-* **dns:\<domain\>**: The identifier "dns:\<domain\>" asserts control of \<domain\> via a DNS TXT record.  The Owner MUST publish a TXT record at:   **`_omatrust.<domain>`**. The TXT value MUST be a sequence of key=value pairs separated by spaces:
+* **dns:\<domain\>**: The identifier "dns:\<domain\>" asserts control of \<domain\> via a DNS TXT record.  The Owner MUST publish a TXT record at:   **`_omatrust.<domain>`**. The TXT value MUST be a sequence of key=value pairs separated by semicolons or spaces:
 
   v=1        (protocol version, fixed to "1")
 
@@ -401,15 +401,15 @@ To verify this method, the Issuer MUST retrieve the DID Document located at **`[
 Examples:
 
 ```
-v=1 caip10=eip155:1:0x89a932207c485f85226d86f7cd486a89a24fcc12
+v=1;caip10=eip155:1:0x89a932207c485f85226d86f7cd486a89a24fcc12
 v=1 caip10=eip155:1:0x1111... caip10=eip155:1:0x2222...
 ```
 
-Multiple caip10 values indicate co-controllers. For rotation, both old and new controllers SHOULD be published during an overlap period. If the apex cannot be modified, the record MAY be published on a subdomain (e.g., id.example.com), in which case the identifier string is **`dns:id.example.com`**. Issuers MUST query authoritative name servers and SHOULD validate DNSSEC when available. The wallet proven by signed challenge (§5.3) MUST match one of the caip10 values.
+Multiple **`caip10`** values indicate co-controllers. For rotation, both old and new controllers SHOULD be published during an overlap period. If the apex cannot be modified, the record MAY be published on a subdomain (e.g., id.example.com), in which case the identifier string is **`did:web:id.example.com`**. Issuers MUST query authoritative name servers and SHOULD validate DNSSEC when available. The minting wallet MUST match one of the **`caip10`** values to prove ownership.
 
 ##### 5.1.3.1.2 **`did:pkh`** Confirmation
 
-This DID method is used to tokenize a smart contract application. Smart contracts do not need to be tokenized in order for users to file attestations on them. Attestations can be filed directly with an attestation service using the DID → Index Address Mapping method (see below). Tokenizing a smart contract is primarily for discovery and usage information. 
+This DID method is used to tokenize a smart contract application. Smart contracts do not need to be tokenized in order for users to file attestations on them. Attestations can be filed directly with an attestation service using the DID → Index Address Mapping method (Section 5.3.2). Tokenizing a smart contract is primarily for discovery and usage information. 
 
 If a smart contract is tokenized, the Issuer MUST confirm that the address minting the smart contract token is controlled by the same entity that either administered or deployed the contract.  For EVM contracts:
 
@@ -418,7 +418,7 @@ If a smart contract is tokenized, the Issuer MUST confirm that the address minti
 
 There are several ways verification can be done:
 
- Address Matching:
+###### 5.1.3.1.2.1 Automated Address Matching
 
 1. Determine the controlling address of the contract  
    * Upgradeable contracts:  
@@ -431,70 +431,68 @@ There are several ways verification can be done:
        (Example: On Ethereum, this may be read from well-known storage slots such as **`eip1967.proxy.admin`**, or via calls to functions like **`owner()`** or role checks in **`AccessControl`**.)  
 2. Compare with the minter of the registry token  
    * The address that minted the registry token MUST equal the controlling address derived above.  
-   * If they match, ownership is verified.  
-3. Fallback: attestation path  
-   * If the registry token is to be minted by a different address (e.g., a multisig, DAO, or delegated key) than the controlling address, the Issuer MUST make an attestation binding the minting address to the controlling address (Section 5.3.5.1).  
-   * Clients SHOULD accept such an attestation only if it is issued by a trusted Issuer.  
-4. Failure to verify  
-   * If no match is found and no valid attestation is present, clients MUST treat the tokenized contract as unverified.
+   * If they match, ownership is verified.
 
-For non-EVM contracts, the Issuer MUST use the appropriate verification mechanism for the appropriate non-EVM virtual machine.
+###### 5.1.3.1.2.2 Onchain Transfers
 
-In cases where a controller cannot host a verification document or use a DNS-based proof, ownership may be established through an on-chain transfer that publicly demonstrates control of the administrative wallet associated with the contract’s DID. This method provides a verifiable, virtual-machine-agnostic mechanism that works across multiple blockchain types.
+This method allows the controlling wallet to give “delegate access” to a minting wallet by sending a deterministic, minimal native-token transfer. The derivation uses the same domain-separation style as the DidIndex helper and relies on fixed-width hashing inputs for clarity and cross-chain consistency.
 
-**Overview**  
-The administrative wallet (referred to as the “admin wallet”) proves its control over a contract by performing a minimal on-chain native token transfer. The transfer is constructed so that it can be programmatically verified by an Issuer and permanently tied to both the contract DID and the login wallet used to interact with OMA3 systems.
+For EVM contracts, the controlling wallet must send the native tokens to the minting wallet address on the same chain as the contract. For non-EVM contracts located on chains that do not have an OMATrust registry contract, the controlling wallet must send the native tokens to an OMA3 sync wallet address on the same chain as the contract. 
 
-**A. EVM Chains (eip155)**  
-For chains following the EVM model, proof of control is established by sending any amount of the native token directly from the admin wallet to the login wallet address on the same chain. The existence of this transaction is sufficient evidence that the admin wallet controls the private key capable of managing the contract.  
-The Issuer verifies the transaction by checking that:
+The amount to transfer is calculated using the following deterministic algorithm:
 
-1. The transaction originates from the admin wallet.  
-2. The recipient address matches the login wallet used to authenticate to OMA3.  
-3. The transaction occurred after the time the ownership verification process was initiated.  
-4. The transaction has reached the minimum required number of confirmations for that chain.  
-5. The admin wallet currently retains administrative control of the contract (via the owner, proxy-admin slot, or equivalent mechanism).
+```
+ownershipVerificationAmount = BASE(chainId) + (uint256(keccak256(abi.encodePacked("OMATrust:Amount:v1:", didHash, bytes20(uint160(loginWallet))))) % RANGE(chainId) )
+```
 
-If the contract’s controller is itself a smart contract that cannot originate arbitrary native transfers (for example, a timelock or multisig vault), the Issuer must instead rely on a recognized chain-native signature method such as ERC-1271, or a governance attestation signed by the controlling entity.
+Where:
 
-**B. Non-EVM Chains (Sink-based Proof)**  
-For non-EVM chains, or any chain where direct wallet-to-wallet transfers are not practical, OMA3 operates a designated sink address specific to each supported chain. The admin wallet demonstrates control by sending a deterministic, verifiable amount of the native token to that sink address.
+* BASE(chainId) is a minimum amount chosen per chain to exceed dust/fee limits. See below for details.  
+* “OMATrust:Amount:v1:” provides domain separation and versioning.  
+* didHash: keccak256(canonicalizeDID(contractDid)).  
+* loginWallet: minting wallet address normalized to lowercase hex without checksum.  
+* RANGE(chainId) is a per-chain span not to exceed 10% of BASE.  The purpose of RANGE is only to introduce minimal entropy and should not materially affect the overall transfer amount. See below for details.  
+* Units: all amounts are computed and verified in the chain’s smallest denomination (e.g., wei, lamports, satoshis).  
+* Note: chainId is used only to select per-chain BASE/RANGE constants; it is not included in the hash input.
 
-The amount sent is derived deterministically from public information so that no server-issued nonce is required. The formula is:
+For account-based chains (EVM, Solana, Cosmos, Aptos, Tezos, Substrate):
 
-amount \= BASE(chainKey) \+ ( uint256( keccak256("OMATrust|v1|" \+ lower(loginWallet) \+ "|" \+ contractDid \+ "|" \+ chainKey) ) mod RANGE(chainKey) )
+* **`BASE(chainId)=10^(max(d−4, 0))`** where **`d`** is the native token decimals  
+* **`RANGE(chainId)=floor(BASE(chainId)/10)`**  
+* Units are in each chain’s smallest denomination.
 
-Where:  
-• BASE(chainKey) is a per-chain minimum chosen to exceed dust thresholds.  
-• RANGE(chainKey) defines the upper bound of variation for the amount.  
-• lower(loginWallet) is the lowercase login wallet address registered with OMA3.  
-• contractDid is the DID of the contract being verified.  
-• chainKey identifies the chain using its CAIP-2 reference.
+For UTXO-style chains (e.g., Bitcoin):
 
-The Issuer validates the transaction by confirming that:
+* **`BASE(chainId)`** \= 2,000 sats (or chain-equivalent)  
+* **`RANGE(chainId)`** \= 200 sats
 
-1. The transfer originates from the admin wallet and targets the correct OMA3 sink address for that chain.  
-2. The transferred amount matches the computed deterministic value.  
-3. The transaction occurred after the ownership-verification initiation time and within the defined validity window.  
-4. The transaction has the minimum number of confirmations required by that chain.  
-5. The admin wallet continues to control the contract at the time of verification.
+An Issuer verifying this method MUST:
 
-**C. Verification Results**  
-Once the required transaction is detected and validated, the Issuer records a Controller Link attestation containing:  
-– the verification method used (“evm-direct” or “sink-amount”),  
-– the chain identifier,  
-– the contract DID,  
-– the admin wallet address,  
-– the login wallet address,  
-– the transaction hash and block number, and  
-– the observation and expiry timestamps.
+1. Parse contractId to obtain chainId and contract address.  
+2. Compute didHash.  
+3. Discover the current controlling wallet for the contract.  
+4. Compute ownershipVerificationAmount.  
+5. Locate a confirmed native-asset transfer that satisfies:  
+   1. from \= discovered controlling wallet;  
+   2. to \= loginWallet (EVM) or the chain’s OMA sink address (non-EVM);  
+   3. value \= ownershipVerificationAmount;  
+   4. blockTime is within the Issuer’s validity window.   
+6. Verify minimum confirmations and canonicality (per-chain policy).  
+7. Re-check that the sender still controls the contract at verification time.  
+8. Record the ownership attestation to the Resolver including **`didHash`** of the contract and minting address.
 
-**D. Security and Operational Notes**  
-• This method produces a public, on-chain association between the admin and login wallets; such visibility is intentional.  
-• No approvals or contract interactions are required—only a simple native token transfer.  
-• The transferred amounts are intentionally minimal and above dust limits.  
-• OMA3 may periodically sweep funds from sink addresses as needed; these operations do not affect verification validity.  
-• If multiple valid proofs exist for the same contract DID, the most recent proof supersedes earlier ones.
+If the controller is a smart contract that cannot originate native transfers (e.g., timelock, vault), this method is not applicable.
+
+Note: This method intentionally creates a public, verifiable on-chain association between the controlling wallet and the minting wallet. Developers should treat this link as a public proof of control and not use high-security treasury addresses for this purpose if possible.
+
+###### 5.1.3.1.2.3 Manual Confirmation
+
+If a smart contract is not EVM-compatible or if the registry token is to be minted by a different address (e.g., a multisig, DAO, or delegated key) than the controlling address, the Issuer MUST use another mechanism to discern if the entity that owns the minting address also controls the controlling address.  Manual mechanisms include:
+
+* Asking the entity to sign a transaction with both wallets that includes a randomly generated nonce, such as making a payment in the amount of the nonce.   
+* Doing a thorough background check to see if the entity's representative is an approved member of the organization that controls the controlling address. 
+
+Once the proof has been given, the issuer MUST make an attestation binding the minting address to the controlling address (Section 5.3.5.1). Clients SHOULD accept such an attestation only if it is issued by a trusted Issuer using an accepted verification mechanism.  If no match is found and no valid attestation is present, clients MUST treat the tokenized contract as unverified.
 
 #### 5.1.3.2 **`contractId`** and **`fungibleTokenId`** Confirmation
 
@@ -651,7 +649,7 @@ The OMATrust Reputation System leverages and augments existing services like Eth
 
 1. Attestation Schemas:  OMA3 defines several schemas for different attestations, from user reviews to cybersecurity certifications.  These are listed below.  
      
-2. Cross Chain Addresses:  Instead of using chain-specific blockchain addresses to identify the attestation subject, OMATrust uses hashed DIDs in the same format as addresses (see DID → Index Address Mapping below), which support web domains as well as blockchain addresses.  
+2. Cross Chain Addresses:  Instead of using chain-specific blockchain addresses to identify the attestation subject, OMATrust uses hashed DIDs in the same format as addresses (see DID → Index Address Mapping Section 5.3.2), which support web domains as well as blockchain addresses.  
      
 3. Resolver:  the Resolver contract stores onchain attestations related to ownership, as described above.
 
@@ -914,7 +912,8 @@ This approach balances decentralized publishing with user trust, enabling permis
 | 0.1 | 2025-09-25 | Initial draft \- Alfred Tom |
 | 0.2 | 2025-09-28 | Clarified data confirmation mechanisms |
 | 0.3 | 2025-10-02 | Introduced TXT DNS domain verification |
-| 0.4 |  | Removed 5.1.6, dataUrl.endpoint.format, dataUrl.a2a, and payments |
+| 0.4 | 2025-10-11 | Removed 5.1.6, dataUrl.endpoint.format, dataUrl.a2a, and payments |
+| 0.5 |  | Appendix C, \_omatrust clarification, more did:pkh ownership confirmation methods. |
 
 # Appendix A
 
@@ -1162,9 +1161,9 @@ This appendix captures design intent for website verification to be finalized in
 
 # Appendix C
 
-## Recommended Trait Hashes
+## Recommended Traits and traitHashes
 
-This appendix provides a list of recommended trait strings for use in the on-chain \`traitHashes\` array. For the onchain field, developers must hash these values with keccak256.  Additional traits may be proposed via OMA3 governance processes.
+**`traitHashes`** are optionally stored onchain to enable filtering of apps for certain onchain clients such as onchain autonomous agents.  This appendix provides a list of recommended trait strings for use in the on-chain **`traitHashes`** array and the **`dataUrl.traits`** field. For the onchain field, developers must hash these values with keccak256.  Additional recommended traits may be proposed via OMA3 governance processes.  Developers can add any string they want.
 
 | Trait String | Description |
 | ----- | ----- |
@@ -1186,7 +1185,7 @@ This appendix provides a list of recommended trait strings for use in the on-cha
 
 ## Example Test Vectors for Canonicalization+Hashing
 
-This appendix provides example test vectors to guide implementers in ensuring correct canonicalization and hashing of JSON data for the \`dataHash\` field. Implementers SHOULD compute hashes using the algorithm specified in \`dataHashAlgorithm\` (e.g., sha256 or keccak256) and verify consistency across runtimes (e.g., Node.js, Python, Solidity). Clients may use these vectors to validate their implementations. Additional vectors should be published by implementers to cover edge cases.
+This appendix provides example test vectors to guide implementers in ensuring correct canonicalization and hashing of JSON data for the **`dataHash`** field. Implementers SHOULD compute hashes using the algorithm specified in **`dataHashAlgorithm`** (e.g., sha256 or keccak256) and verify consistency across runtimes (e.g., Node.js, Python, Solidity). Clients may use these vectors to validate their implementations. Additional vectors should be published by implementers to cover edge cases.
 
 | Input JSON | Canonicalized JSON | Expected Hash (Compute per dataHashAlgorithm) |
 | ----- | ----- | ----- |
