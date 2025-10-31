@@ -130,7 +130,7 @@ The objects in the **`versionHistory`** array have the following fields:
 
 #### 5.1.1.2 JSON Format: **`dataUrl`**
 
-**`dataUrl`** points to an endpoint that returns a JSON object with offchain data.  The JSON object has the following top level fields depending on the value of the **`type`** field in the NFT contract:
+**`dataUrl`** points to an endpoint that returns a JSON object with offchain data.  The JSON object has the following top level fields depending on the value of the **`interfaces`** field in the NFT contract:
 
 | Value | Format | Description | Interface |  |  |
 | ----- | ----- | ----- | ----- | ----- | ----- |
@@ -141,7 +141,7 @@ The objects in the **`versionHistory`** array have the following fields:
 | description | string | Long description of the application.  Max 4000 chars. Matches ERC-721 metadata extension. | Y | Y | Y |
 | publisher | string | Publisher name. | Y | Y | Y |
 | summary | string | Short description of the application.  Max 80 chars. | Y | O | O |
-| owner | string | Address of the owner of the app token NFT.  Used to confirm ownership of the dataUrl JSON (see “Field Confirmation” below). Format is VM-dependent.  EVM is “address”. | Y | Y | Y |
+| owner | string | Address of the owner of the app token NFT.  Used to confirm ownership of the dataUrl JSON (see “Field Confirmation” below). Format is CAIP-10. | Y | Y | Y |
 | screenshotUrls | \[URL\] | JSON urls field contains an array of URLs to screenshot images. | Y | N | N |
 | videoUrls | \[URL\] | JSON urls field contains an array of URLs to videos. | O | N | N |
 | 3dAssetUrls | \[URL\] | JSON urls field contains an array of URLs to 3D assets (GLB, USDZ, etc.). | O | N | N |
@@ -151,9 +151,8 @@ The objects in the **`versionHistory`** array have the following fields:
 | traits | \[string\] | An array of max 20 traits and the total char count cannot exceed 120\. See Appendix C. | O | O | O |
 | interfaceVersions | \[string\] | Array of supported versions of the interface | N | O | O |
 | platforms | JSON | Object of platforms supported by the app. | Y | N | N |
-| endpoint | JSON | Details on the API endpoint (see below) | N | Y | O |
+| endpoints | \[JSON\] | Array of endpoint objects (see below) | N | Y | O |
 | artifacts | JSON | Allows clients to verify content (e.g.- binaries) | O | O | N |
-| mcp | JSON | Implements the MCP server specification (see below) | N | O | N |
 
 Table 2: Application offchain data.
 
@@ -188,24 +187,27 @@ A **`platform`** field is a JSON object that has the following fields:
 
 #### 
 
-#### 5.1.2.2 JSON Format: **`dataUrl.endpoint`**
+#### 5.1.2.2 JSON Format: **`dataUrl.endpoints`**
 
-The **`endpoint`** JSON object contains the following fields:
+The **`endpoints`** field contains an array JSON objects, each of which contains the following fields:
 
 | Value | Format | Description | Required |
 | ----- | ----- | ----- | ----- |
-| url | string | URL of the endpoint | Y |
+| name | string | MCP, A2A, etc. | Y |
+| endpoint | string | URL of the endpoint | Y |
 | schemaUrl | string | URL to API schema or documentation | O |
 
 For **`interface`** \= 4 (contracts), the chain ID is taken from the DID (did:pkh with CAIP-10 ID). Clients can then determine the format the RPC endpoint requires based on the chain ID. 
 
+There are additional option fields in endpoints depending on the type of 
+
 #### 
 
-#### 5.1.2.3 JSON Format: **`dataUrl.mcp`**
+#### 5.1.2.3 Endpoint Type MCP
 
-This object represents the MCP specification and gives agents the information they need to interface with an MCP server.  The reader is referred to the specification of MCP v1.0 (modelcontextprotocol.io, Section 3, Server Metadata), which has descriptions of each field and is incorporated by reference.  
+If an object in **`dataUrl.endpoints`** has **`name`** equal to **`MCP`** (see 5.1.2.2) the endpoint object holds additional fields that represent the MCP specification and give agents the information they need to interface with an MCP server.  The reader is referred to the specification of MCP v1.0 (modelcontextprotocol.io, Section 3, Server Metadata), which has descriptions of each field and is incorporated by reference.  
 
-The following are the JSON fields for the **`mcp`** field:
+The following are the additional JSON fields for an **`endpoints`** object:
 
 | Value | Format | Description | Required |
 | ----- | ----- | ----- | ----- |
@@ -217,7 +219,7 @@ The following are the JSON fields for the **`mcp`** field:
 
 ##### 
 
-##### 5.1.2.3.1 JSON Format: **`dataUrl.mcp.tools`**
+##### 5.1.2.3.1 MCP JSON Format: **`dataUrl.endpoints[0].tools`**
 
 The **`tools`** array contains JSON objects with the following fields:
 
@@ -230,7 +232,7 @@ The **`tools`** array contains JSON objects with the following fields:
 
 ##### 
 
-##### 5.1.2.3.2 JSON Format: **`dataUrl.mcp.resources`**
+##### 5.1.2.3.2 MCP JSON Format: **`dataUrl.endpoints[0].resources`**
 
 The **`resources`** array contains JSON objects with the following fields:
 
@@ -243,7 +245,7 @@ The **`resources`** array contains JSON objects with the following fields:
 
 ##### 
 
-##### 5.1.2.3.3 JSON Format: **`dataUrl.mcp.prompts`**
+##### 5.1.2.3.3 MCP JSON Format: **`dataUrl.endpoints[0].prompts`**
 
 The **`prompts`** array contains JSON objects with the following fields:
 
@@ -255,7 +257,7 @@ The **`prompts`** array contains JSON objects with the following fields:
 
 ##### 
 
-##### 5.1.2.3.4 JSON Format: **`dataUrl.mcp.transport`**
+##### 5.1.2.3.4 MCP JSON Format: **`dataUrl.endpoints[0].transport`**
 
 The **`transport`** JSON object contains the following fields:
 
@@ -266,7 +268,7 @@ The **`transport`** JSON object contains the following fields:
 
 ##### 
 
-##### 5.1.2.3.5 JSON Format: **`dataUrl.mcp.authentication`**
+##### 5.1.2.3.5 MCP JSON Format: **`dataUrl.endpoints[0].authentication`**
 
 The **`authentication`** JSON object contains the following fields:
 
@@ -577,7 +579,7 @@ The following table details versioning rules for certain onchain fields.
 | Move from **`(did, major)`** → **`(did, major+i)`** | **Must mint a new NFT** |
 | Edit **`interfaces`** | Interfaces change requires **`minor+i`** and must be additive only |
 | Edit **`dataUrl`** or **`traitHashes`** | Requires **`patch+i`** or **`minor+i`** |
-| Edit **`fungibleTokenId`** | Must mint a new DID |
+| Edit **`dataUrl`** or **`fungibleTokenId`** | Must mint a new DID |
 | Edit **`contractId`** | Not allowed |
 | Transfer NFT ownership | Allowed without version changes |
 
@@ -913,7 +915,7 @@ This approach balances decentralized publishing with user trust, enabling permis
 | 0.2 | 2025-09-28 | Clarified data confirmation mechanisms |
 | 0.3 | 2025-10-02 | Introduced TXT DNS domain verification |
 | 0.4 | 2025-10-11 | Removed 5.1.6, dataUrl.endpoint.format, dataUrl.a2a, and payments |
-| 0.5 |  | Appendix C, \_omatrust clarification, more did:pkh ownership confirmation methods. |
+| 0.5 | 2025-10-30 | Appendix C, \_omatrust clarification, more did:pkh ownership confirmation methods, ERC-8004 compatibility. |
 
 # Appendix A
 
