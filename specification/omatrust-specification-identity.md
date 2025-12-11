@@ -1,24 +1,21 @@
-# OMATrust Specification
+# OMATrust Identity Registry Specification
 
 ## Decentralized and Permissionless Trust Layer for the Open Internet 
 
 # 
 
-# 
-
 # 1\. Executive Summary
 
-This document proposes a decentralized and permissionless trust layer for the open internet, called OMATrust. It has three main components: 
+This document (“Specification”) defines the requirements for the Identity Registry of OMATrust, a decentralized and permissionless trust layer for the open internet. It has two main components: 
 
 * Application Registry- a registry of tokenized Applications that are identified by DIDs.  
     
-* Ownership Resolver- a smart contract that resolves token ownership disputes.  
-    
-* Reputation System- infrastructure for attestations on DIDs, such as cybersecurity certifications.
+* Ownership Resolver- a smart contract that resolves token ownership disputes.
 
-The specification details the on-chain and off-chain metadata for tokenized applications, the processes for metadata confirmation and ownership verification, and control policies for versioning. It also outlines the Reputation System, including DID to Index Address mapping, attestation querying, EAS integration, and various schema definitions for linked identifiers, data URL attestations, endorsements, certifications, and user reviews. 
 
-The document emphasizes client guidance for adopting an attestation-based trust policy to prevent fraud and ensure user trust in a decentralized environment.
+This Specification will be referenced by and OMATrust Core Specification and works in conjunction with the OMATrust Proof Specification and OMATrust Reputation Specification.
+
+The Specification is fully compliant with ERC-8004’s requirements for the Identity Registry. The specification details the on-chain and off-chain metadata for tokenized applications, the processes for metadata confirmation and ownership verification, and control policies for versioning.
 
 # 2\. Scope
 
@@ -38,7 +35,9 @@ OMATrust Whitepaper: [https://github.com/oma3dao/omatrust-docs/blob/main/whitepa
 DID Specification: [https://www.w3.org/TR/did-core](https://www.w3.org/TR/did-core/#terminology)  
 DID Spec Registries: [https://www.w3.org/TR/did-spec-registries/](https://www.w3.org/TR/did-spec-registries/)  
 Metaverse Standards Forum Spatial Store use case  
-Metaverse Standards Forum Autonomous Payments use case
+Metaverse Standards Forum Autonomous Payments use case  
+OMATrust Proof Specification  
+ERC-8004 Specification
 
 # 4\. Definitions
 
@@ -105,8 +104,8 @@ Every app registry NFT stores the following information associated with an appli
 | minter | address | Address of the transaction signer. | Y | N |
 | owner | address | Current owner (built into ERC-721) | Y | Y (soulbound optional) |
 | dataUrl | URL | URL to offchain data | Y | Y |
-| dataHash | string | Hash of the JSON returned by dataUrl (see 5.1.3.2) | Y | Y |
-| dataHashAlgorithm | string | The hash algorithm used to compute dataHash. Values: "keccak256", "sha256" | Y | Y |
+| dataHash | string | Hash of the JSON returned by dataUrl (see 5.1.3.3) | Y | Y |
+| dataHashAlgorithm | string | The hash algorithm used to compute dataHash. Values: "keccak256", "sha256".  Default is VM-specific (e.g.- keccak256 for EVM). | N | Y |
 | traitHashes | \[string\] | A structure of hashed traits.  Implementation is different for each VM. ​​Implementations SHOULD cap on-chain traitHashes to ≤ 20 entries to mirror the off-chain keywords cap, and clients MUST NOT assume more than 20 are indexed.  See Appendix C. | N | Y |
 | interfaces | \[enum\] | An unordered set of interface capability codes. Multiple capabilities may be present.  Example: if using a bitmap, bit 0 \= human, bit 1 \= api, and bit 2 \= smart contract. | Y | N |
 
@@ -140,7 +139,7 @@ The objects in the **`versionHistory`** array have the following fields:
 | image | URL | URL to the application icon.  Matches ERC-721 metadata extension. | Y | O | O |
 | description | string | Long description of the application.  Max 4000 chars. Matches ERC-721 metadata extension. | Y | Y | Y |
 | publisher | string | Publisher name. | Y | Y | Y |
-| summary | string | Short description of the application.  Max 80 chars. | Y | O | O |
+| summary | string | Short description of the application.  Max 80 chars. | O | O | O |
 | owner | string | Address of the owner of the app token NFT.  Used to confirm ownership of the dataUrl JSON (see “Field Confirmation” below). Format is CAIP-10. | Y | Y | Y |
 | screenshotUrls | \[URL\] | JSON urls field contains an array of URLs to screenshot images. | Y | N | N |
 | videoUrls | \[URL\] | JSON urls field contains an array of URLs to videos. | O | N | N |
@@ -153,6 +152,8 @@ The objects in the **`versionHistory`** array have the following fields:
 | platforms | JSON | Object of platforms supported by the app. | Y | N | N |
 | endpoints | \[JSON\] | Array of endpoint objects (see below) | N | Y | O |
 | artifacts | JSON | Allows clients to verify content (e.g.- binaries) | O | O | N |
+| registrations | \[JSON\] | Array of App Registry tokenizations | Y | Y | Y |
+| version | string | x.y.z | O | O | O |
 
 Table 2: Application offchain data.
 
@@ -300,7 +301,7 @@ The following table shows the common fields in each object in the mapping.
 | sizeBytes | Integer |  | N |
 | provenanceUrl | URL | SLSA provenance JSON | N |
 | signatureUrls | \[JSON\] | Example:  \[{“sigUrl”:”blah”, “sigAlgorithm”:”pgp/x509”}\] | N |
-| otherHashes | \[JSON\] | Example: \[{“hash”:”blah”,”algo”:”sha256”}\] | N |
+| otherDigests | \[JSON\] | Example: \[{“hash”:”blah”,”algo”:”sha256”}\] | N |
 | notarization | TBD |  | N |
 | transparencyLog | JSON | See below | N |
 
@@ -321,13 +322,15 @@ JSON example for the **`artifacts`** field:
     "signatureUrls": [
       {
         "sigUrl": "https://dl.oma3.dev/pkg/app-v2-windows.exe.sig",
-        "sigAlgorithm": "x509"
+        "sigAlgorithm": "x509",
+  "keyLocator": "did:web:example.com#release-key"
       }
     ],
-    "otherHashes": [
+    "otherDigests": [
       {
         "hash": "e05ac4bb...",
-        "algo": "blake3"
+        "algo": "blake3",
+	   "canon": "raw"
       },
       {
         "hash": "8b7e1a...",
@@ -437,55 +440,20 @@ There are several ways verification can be done:
 
 ###### 5.1.3.1.2.2 Onchain Transfers
 
-This method allows the controlling wallet to give “delegate access” to a minting wallet by sending a deterministic, minimal native-token transfer. The derivation uses the same domain-separation style as the DidIndex helper and relies on fixed-width hashing inputs for clarity and cross-chain consistency.
+This method allows a controlling wallet to grant delegate access to another (e.g.- minting) wallet by sending a deterministic, minimal native-asset transfer. The transfer constitutes an OMATrust Proof of type **`tx-encoded-value`** as specified in the OMATrust Proof Specification. 
 
-For EVM contracts, the controlling wallet must send the native tokens to the minting wallet address on the same chain as the contract. For non-EVM contracts located on chains that do not have an OMATrust registry contract, the controlling wallet must send the native tokens to an OMA3 sync wallet address on the same chain as the contract. 
+Issuers and verifiers MUST use the OMATrust Proof Specification **`proofType`** \= **`tx-encoded-value`** (OMATrust Proof Specification §5.3.6) with **`proofPurpose`** \= **`shared-control`** (OMATrust Proof Specification §5.1.3.1) to implement and validate this method. All rules for `Proof` construction, valid transaction form, chain selection, and verification are defined in the Proof Specification and are not repeated here.  
 
-The amount to transfer is calculated using the following deterministic algorithm:
+The following can be used as a guide when implementing **`tx-encoded-value`**:
 
-```
-ownershipVerificationAmount = BASE(chainId) + (uint256(keccak256(abi.encodePacked("OMATrust:Amount:v1:", didHash, bytes20(uint160(loginWallet))))) % RANGE(chainId) )
-```
+* Subject/sender: the onchain object delegating access (**`did`**, **`contractId`**, etc.)  
+* Controller/recipient: the address receiving the delegation (**`minter`**, **`owner`**, etc.). 
 
-Where:
+Notes:  
 
-* BASE(chainId) is a minimum amount chosen per chain to exceed dust/fee limits. See below for details.  
-* “OMATrust:Amount:v1:” provides domain separation and versioning.  
-* didHash: keccak256(canonicalizeDID(contractDid)).  
-* loginWallet: minting wallet address normalized to lowercase hex without checksum.  
-* RANGE(chainId) is a per-chain span not to exceed 10% of BASE.  The purpose of RANGE is only to introduce minimal entropy and should not materially affect the overall transfer amount. See below for details.  
-* Units: all amounts are computed and verified in the chain’s smallest denomination (e.g., wei, lamports, satoshis).  
-* Note: chainId is used only to select per-chain BASE/RANGE constants; it is not included in the hash input.
+* “Controller” in the context of a Proof is different from the controlling address of a Subject.  Controller is the entity receiving the delegate access.  The controlling address of a Subject could be found using the mechanisms described in 5.1.3.1.2.  
+* This method creates a public, verifiable onchain association between the Subject and Controller. Developers should treat this link as public proof of control and avoid using high-security treasury addresses for this purpose when possible.
 
-For account-based chains (EVM, Solana, Cosmos, Aptos, Tezos, Substrate):
-
-* **`BASE(chainId)=10^(max(d−4, 0))`** where **`d`** is the native token decimals  
-* **`RANGE(chainId)=floor(BASE(chainId)/10)`**  
-* Units are in each chain’s smallest denomination.
-
-For UTXO-style chains (e.g., Bitcoin):
-
-* **`BASE(chainId)`** \= 2,000 sats (or chain-equivalent)  
-* **`RANGE(chainId)`** \= 200 sats
-
-An Issuer verifying this method MUST:
-
-1. Parse contractId to obtain chainId and contract address.  
-2. Compute didHash.  
-3. Discover the current controlling wallet for the contract.  
-4. Compute ownershipVerificationAmount.  
-5. Locate a confirmed native-asset transfer that satisfies:  
-   1. from \= discovered controlling wallet;  
-   2. to \= loginWallet (EVM) or the chain’s OMA sink address (non-EVM);  
-   3. value \= ownershipVerificationAmount;  
-   4. blockTime is within the Issuer’s validity window.   
-6. Verify minimum confirmations and canonicality (per-chain policy).  
-7. Re-check that the sender still controls the contract at verification time.  
-8. Record the ownership attestation to the Resolver including **`didHash`** of the contract and minting address.
-
-If the controller is a smart contract that cannot originate native transfers (e.g., timelock, vault), this method is not applicable.
-
-Note: This method intentionally creates a public, verifiable on-chain association between the controlling wallet and the minting wallet. Developers should treat this link as a public proof of control and not use high-security treasury addresses for this purpose if possible.
 
 ###### 5.1.3.1.2.3 Manual Confirmation
 
@@ -578,7 +546,7 @@ The following table details versioning rules for certain onchain fields.
 | ----- | ----- |
 | Move from **`(did, major)`** → **`(did, major+i)`** | **Must mint a new NFT** |
 | Edit **`interfaces`** | Interfaces change requires **`minor+i`** and must be additive only |
-| Edit **`dataUrl`** or **`traitHashes`** | Requires **`patch+i`** or **`minor+i`** |
+| Edit **`traitHashes`** | Requires **`patch+i`** or **`minor+i`** |
 | Edit **`dataUrl`** or **`fungibleTokenId`** | Must mint a new DID |
 | Edit **`contractId`** | Not allowed |
 | Transfer NFT ownership | Allowed without version changes |
@@ -649,7 +617,7 @@ A permissionless app registry without third party attestations leaves users open
 
 The OMATrust Reputation System leverages and augments existing services like Ethereum Attestation Service.  It is comprised of the following components:
 
-1. Attestation Schemas:  OMA3 defines several schemas for different attestations, from user reviews to cybersecurity certifications.  These are listed below.  
+1. Attestation Schemas:  OMA3 defines several schemas for different attestations, from user reviews to cybersecurity certifications.  These are defined in the OMATrust Reputation Specification (§6–7).  
      
 2. Cross Chain Addresses:  Instead of using chain-specific blockchain addresses to identify the attestation subject, OMATrust uses hashed DIDs in the same format as addresses (see DID → Index Address Mapping Section 5.3.2), which support web domains as well as blockchain addresses.  
      
@@ -741,134 +709,21 @@ Clients can retrieve attestations related to a DID by computing its Index Addres
 
 ### 
 
-### 5.3.5 Schema Definitions
+### 5.3.5 Reputation Specification (External Reference)
 
-#### 
+The OMATrust specification defines the identity, integrity, and attestation-plumbing components used across the ecosystem. These include DID resolution, data integrity verification, canonicalization rules, attestation indexing, and the integration requirements for onchain attestation systems.
 
-#### 5.3.5.1 Linked Identifier Schema
+Application-layer reputation semantics—such as user reviews, service-proof objects, endorsements, certifications, linked identifiers, and other trust-related attestations—are standardized separately in the OMA3 Reputation Specification.
 
-This schema provides additional attestations on control of an ID by another ID.  For example, attesting that the entity that controls one blockchain address also controls a different blockchain address.  Examples of IDs that can be entered into a Linked Identifier attestation:
+The OMA3 Reputation Specification defines:
 
-* DID:  DIDs need an attestation signed by the wallet that is associated with the DID.  
-* Blockchain address:  Similar to DIDs, blockchain addresses need an attestation signed by the blockchain address.  
-* Web3 names:  web3 domains need an attestation that the developer owns the wallet address that controls the web3 domain.  
-* URL:  URLs need an attestation of a third party that uses a mechanism to prove the developer controls the domain.  
+* the structure and semantics of all reputation-related attestations  
+* schemas for user reviews, endorsements, certifications, security assessments, and related reputation attestations; and rules for attestation-layer proof usage  
+* verification and trust-model requirements for attesters and relying parties  
+* client-side guidance for validation, aggregation, scoring, and display  
+* indexing and search conventions tailored for reputation data
 
-In some cases the Issuer of an attestation can be automated.  It is easy for software to get signatures from two different blockchain accounts to prove common control.  Others, such as offchain IDs like passport numbers, may require manual confirmation.  
-
-Below are some Linked Identifier schema field values and verification processes that Issuers could implement before issuing a Linked Identifier attestation.
-
-| Field | Value | Description |
-| ----- | ----- | ----- |
-| Issuer ID | Wallet address | ID of the attester/Issuer |
-| Holder ID | DID, wallet address, or Web3 domain | ID of the Application |
-| Linked ID | Wallet address | Wallet address of Application owner |
-| AttestationDate | block.timestamp |  |
-| Method | enum | Method used to verify the metadata |
-
-For verifying that a Holder ID wallet address also controls a URL domain, a third party Issuer could follow this procedure, which is similar to proving domain ownership for a website SSL certificate:
-
-1. Developer goes to the Issuer’s website and enters the domain they are trying to verify.  
-2. Developer uses the website to sign a transaction with the same wallet they used with the Application Registry.    
-3. Issuer website gives developer a random value.  
-4. Developer stores the value in the domain’s DNS TXT Record.  
-5. Developer tells the Issuer website to check the DNS records.  
-6. If the Issuer finds records contain the value, the Issuer sends a signed transaction attestation to the blockchain with the above format.
-
-To bind a did:web identifier to a blockchain wallet address, the schema requires an attestation that proves control of both:
-
-* Holder ID: **`did:web:example.com`**  
-* Linked ID: **`eip155:1:0xabc...`**
-
-**Verification flow:**
-
-1. The developer serves a DID document at **`https://example.com/.well-known/did.json`** containing a **`verificationMethod`** entry with **`blockchainAccountId`** equal to the wallet address.  
-     
-2. The developer signs a challenge message with that wallet.  
-     
-3. The Issuer (e.g., OMA3 verification server) validates both:  
-     
-   * the DID document includes the wallet address, and  
-   * the wallet produced a valid signature.  
-       
-4. The Issuer then issues a Linked Identifier attestation with fields:  
-     
-   * Issuer ID: attester wallet  
-   * Holder ID: did:web:example.com  
-   * Linked ID: eip155:1:0xabc...  
-   * AttestationDate: block.timestamp  
-   * Method: didWebToWalletSignature  
-     
-
-**Revocation/updates:** A new attestation overwrites the old one, or the Issuer can revoke it explicitly.
-
-**Usage:** Clients and registries SHOULD only consider a did:web binding valid if a live Linked Identifier attestation exists proving control of both identifiers.
-
-#### 5.3.5.2 DataURL Attestation Schema
-
-Every app token stores two on-chain pointers to its mutable metadata:
-
-| Slot | Purpose |
-| ----- | ----- |
-| dataUrl (string) | HTTP / IPFS endpoint that returns the JSON manifest for this token. |
-| dataHash (bytes32) | Hash of the JCS‑canonicalized bytes of the JSON served at dataUrl. |
-
-To prevent silent or misleading edits, each manifest must be covered by a third-party attestation whose schema includes the same **`dataHash`**. The three artefacts work together as follows:
-
-| Step | Actor | Action |
-| ----- | ----- | ----- |
-| 1 .  Publish manifest | App developer | Upload the JSON to **`dataUrl`**; compute **`dataHash = hash(bytes(JSON))`**. |
-| 2 . Request attestation | Human reviewer (attester) | Manually inspect the JSON (name, publisher, screenshots, etc.). • If compliant, issue an EAS-compatible attestation:   **`{tokenId, dataHash, schema: NAME_COMPLIANCE, issuedAt}`** |
-| 3 .  Register hash | App developer | Call **`updateMetadata(tokenId, dataUrl, dataHash);`** the contract rejects the call unless a matching attestation exists. |
-| 4 . Client verification | Wallet / marketplace | a) Fetch **`dataUrl`** JSON. b) Compute **`hash(JSON)`** and compare it to on-chain **`dataHash`**. c) Confirm an attestation referencing that same hash is still valid. d) Only display the app if both checks pass. |
-
-Why this is secure
-
-* Immutability guarantee – Any byte-level change (even a new screenshot) alters the hash; the old attestation no longer matches, so UIs hide the app until a new review is issued.
-
-* Reviewer accountability – The attestation is signed by an address in the front-end’s trusted-attester list; multiple independent attesters can coexist, avoiding central gate-keeping.
-
-* Audit trail – Every approved version leaves an on-chain record (`dataHash` \+ attestationId), giving provable history for compliance audits.
-
-Manual review requirements
-
-A reviewer MUST verify at minimum:
-
-1. Brand & trademark – No infringing or misleading app/publisher names.
-
-2. Visual assets – Screenshots, icons, videos accurately represent the product.
-
-3. Policy compliance – No illicit content, malware links, or disallowed keywords.
-
-Once satisfied, the reviewer signs the attestation that binds *their* approval to the specific **`dataHash`**. Any later change triggers the whole cycle again, ensuring continuous trust in all mutable data while keeping the registry fully decentralised.
-
-#### 5.3.5.3 Endorsement Schema
-
-An Endorsement attestation is a simple way for an organization to vouch for a DID subject.
-
-#### 5.3.5.4 Certification Schema
-
-A certification attestation is a more structured type of endorsement that reflects the typical certification model used by certification bodies such as the Federal Trade Commission, Common Criteria, FIPS, Underwriter Laboratories, SunSpec Alliance, and countless others.  In these programs there are four main actors:
-
-* Product- the subject that is getting certification.  
-* Developer- the entity responsible for the product.  
-* Assessor- a trusted third party that analyzes the product against a requirements document and test procedure.  
-* Certification Body- an entity (such as an industry consortium or government body) that creates and administers the certification program.
-
-The use case flow using a certification schema is as follows:
-
-1. Developer signs agreement with the Assessor to test the Product for certification.  
-2. Assessor tests the product using documents ratified by the Certification Body.  
-3. Assessor sends test results to the Certification Body.  
-4. Certification Body reviews the test results.  If it passes, it signs the Certification attestation transaction.  If not, it sends the failure reasons to the Assessor.
-
-#### 
-
-#### 5.3.5.5 User Review Schema
-
-User reviews are critical for any app’s reputation.  The User Review attestation allows anyone to post a review on a DID.  
-
-The problem with permissionless reviews is that a developer can review their own app by spinning up multiple wallets.  Users can also spam bad reviews on an app.  The User Review attestation relies on KYC and KYB attestations as well as app stores requiring these attestations to prevent these issues from making user reviews meaningless.  For example, an app store SHOULD only incorporate user review attestations created by wallets that have been verified (e.g.- KYC).  Applications MAY also require uniqueness attestations (e.g.- Worldcoin) as well to prevent sybil attacks.  See below for more app store guidance on leveraging attestations to protect users.
+Separating reputation semantics from the OMATrust core ensures that the identity and integrity layer remains stable and slow-moving, while the reputation layer can evolve independently and incorporate new attestation types, protocol extensions, and ecosystem practices over time.
 
 Specifications on the below schemas can be found in the [OMA3 Reputation Service draft proposal](https://docs.google.com/document/d/11NQgwzXkXMGXy07NIDcMovPjKQT4W3CiHWdNZ2TpbQ0/).
 
@@ -916,6 +771,7 @@ This approach balances decentralized publishing with user trust, enabling permis
 | 0.3 | 2025-10-02 | Introduced TXT DNS domain verification |
 | 0.4 | 2025-10-11 | Removed 5.1.6, dataUrl.endpoint.format, dataUrl.a2a, and payments |
 | 0.5 | 2025-10-30 | Appendix C, \_omatrust clarification, more did:pkh ownership confirmation methods, ERC-8004 compatibility. |
+| 0.6 | 2025-12-10 | Added dataUrl.registrations and version, clarified default hash algorithms and that summary is optional, refinements to artifacts, require new NFT mint on dataUrl change. |
 
 # Appendix A
 
@@ -1165,7 +1021,7 @@ This appendix captures design intent for website verification to be finalized in
 
 ## Recommended Traits and traitHashes
 
-**`traitHashes`** are optionally stored onchain to enable filtering of apps for certain onchain clients such as onchain autonomous agents.  This appendix provides a list of recommended trait strings for use in the on-chain **`traitHashes`** array and the **`dataUrl.traits`** field. For the onchain field, developers must hash these values with keccak256.  Additional recommended traits may be proposed via OMA3 governance processes.  Developers can add any string they want.
+**`traitHashes`** are optionally stored onchain to enable filtering of apps for certain onchain clients such as onchain autonomous agents.  This appendix provides a list of recommended trait strings for use in the on-chain **`traitHashes`** array and the **`dataUrl.traits`** field. For the onchain field, developers must hash these values with the canonical hashing algorithm of the chain.  For Ethereum this is keccak-256.  Additional recommended traits may be proposed via OMA3 governance processes.  Developers can add any string they want.
 
 | Trait String | Description |
 | ----- | ----- |
