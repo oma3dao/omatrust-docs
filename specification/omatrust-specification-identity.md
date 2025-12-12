@@ -400,17 +400,17 @@ To verify this method, the Issuer MUST retrieve the DID Document located at **`[
 
   v=1        (protocol version, fixed to "1")
 
-  caip10=...   (one or more identifiers in CAIP-10 format)
+  controller=...   (one or more identifiers in CAIP-10 format)
 
 
 Examples:
 
 ```
-v=1;caip10=eip155:1:0x89a932207c485f85226d86f7cd486a89a24fcc12
-v=1 caip10=eip155:1:0x1111... caip10=eip155:1:0x2222...
+v=1;controller=eip155:1:0x89a932207c485f85226d86f7cd486a89a24fcc12
+v=1 controller=eip155:1:0x1111... controller=eip155:1:0x2222...
 ```
 
-Multiple **`caip10`** values indicate co-controllers. For rotation, both old and new controllers SHOULD be published during an overlap period. If the apex cannot be modified, the record MAY be published on a subdomain (e.g., id.example.com), in which case the identifier string is **`did:web:id.example.com`**. Issuers MUST query authoritative name servers and SHOULD validate DNSSEC when available. The minting wallet MUST match one of the **`caip10`** values to prove ownership.
+Multiple **`controller`** values indicate co-controllers. For rotation, both old and new controllers SHOULD be published during an overlap period. If the apex cannot be modified, the record MAY be published on a subdomain (e.g., id.example.com), in which case the identifier string is **`did:web:id.example.com`**. Issuers MUST query authoritative name servers and SHOULD validate DNSSEC when available. The minting wallet MUST match one of the **`controller`** values to prove ownership.
 
 ##### 5.1.3.1.2 **`did:pkh`** Confirmation
 
