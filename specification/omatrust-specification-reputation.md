@@ -514,8 +514,8 @@ A User Review attestation MUST conform to the structure defined in user-review.s
 | organization | No | string | The DID of the organization that controls the subject. Used when **`subject`** is the service, not an entity. |
 | ratingValue | Yes | integer | A numerical rating expressing the reviewer’s evaluation of the subject.  High rating can be a maximum of 5\.  Low rating can be a minimum of 1\. |
 | version | No | string | Version of the **`subject`** (e.g., app or API version). |
-| summary | No | string | Maximum length of 50 chars. |
-| reviewBody | No | string | Max length of 200 chars. |
+| summary | No | string | Maximum length of 200 chars. |
+| reviewBody | No | string | Max length of 500 chars. |
 | author | No | string | Any string that describes the author (DID, name, etc.) |
 | screenshotUrls | No | \[string\] | Array of URL strings that point to screenshots. |
 | proofs | No | \[object\] | See below |
@@ -607,7 +607,7 @@ A User Review Response attestation MUST conform to the normative JSON schema use
 | attester | Yes | string | This SHOULD correspond to the **`subject`** of the reviewing being responded to or a delegate of **`subject`**. |
 | subject | No | string | If present, MUST match the **`attester`** of the referenced User Review attestation. |
 | refUID | Yes | string | UID of the User Review attestation this response targets. This is the canonical linkage between response and review. |
-| responseBody | Yes | string | Max length of 200 chars. |
+| responseBody | Yes | string | Max length of 500 chars. |
 | issuedAt | Yes | integer |  |
 
 ### 7.2.3 Verification
@@ -657,7 +657,7 @@ An Endorsement attestation MUST conform to the normative JSON schema endorsement
 | attester | Yes | string | DID of the entity issuing the endorsement or approval. |
 | subject | Yes | string | DID of the entity being endorsed or approved. |
 | organization | No | string | DID of a parent organization when endorsing a service/resource that belongs to that organization. Omit when endorsing an organization directly. |
-| responseBody | Yes | string | Optional semantic version of the endorsed subject. Used with subject is a service with versioning. |
+| version | No | string | Optional semantic version of the endorsed subject. Used if **`subject`** is a service with versioning. |
 | policyUri | No | string | Optional URI pointing to the formal criteria or process used for approvals. |
 | issuedAt | No | integer |  |
 | effectiveAt | No | integer |  |
@@ -740,7 +740,7 @@ A Certification attestation MUST conform to the normative JSON schema certificat
 | subject | Yes | string | DID of the product, system, service, or organization being assessed. |
 | organization | No | string | DID of the parent organization that owns or governs the certified subject.  |
 | assessmentKind | Yes | string | Declared kind of assessment (e.g., static analysis, pen test). Values are registry-driven via x-oma3-enum. Unknown values are valid unless a client’s local policy rejects them. |
-| outcome | No | string | Optional overall outcome. If omitted, outcome MUST be interpreted as pass. |
+| outcome | No | string | Values can be **`pass`** or **`fail`**. If omitted, outcome MUST be interpreted as **`pass`**. |
 | reportURI | N | string | Optional URI of an off-chain assessment report. |
 | reportDigest | N | object | Optional digest enabling integrity verification of reportURI content. Includes algorithm and canonicalization metadata.  Uses the same fields verification as **`payloadSpecDigest`** (Section 8). |
 | version | No | string | Optional software version of the certified subject. Omit when certifying the subject independent of software version. |
@@ -871,7 +871,7 @@ A Certification attestation MUST conform to the normative JSON schema certificat
 | methodURI | No | string | Methodology location. |
 | reportURI | No | string | Human-readable report location. |
 | reportDigest | No | object |  |
-| outcome | No | string | pass, pass-with-findings, fail, or informational |
+| outcome | No | string | Values can be **`pass`** or **`fail`**. If omitted, outcome MUST be interpreted as **`pass`**. |
 | metrics | No | object |  |
 | policy |  |  |  |
 
