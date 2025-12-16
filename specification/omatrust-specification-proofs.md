@@ -528,7 +528,39 @@ The **`proofObject`** for **`evidence-pointer`** MUST be a JSON object with the 
 
 ##### No cryptographic material is embedded directly in the pointer; the url resolves to the evidence artifact that supports verification.
 
-#### 5.3.5.2 Verification Procedure
+#### 5.3.5.2 Evidence String Format
+
+For **`evidence-pointer`** Proofs where the evidence is hosted on a social platform (profile bio, status, pinned post, etc.), and a cryptographic proof is not possible or desired, the evidence string MUST follow this format:
+
+**`v=1;controller=<DID>`**
+
+Example:
+
+**`v=1;controller=did:pkh:eip155:66238:0x0cB8859f11CC52Ca73256D86C37843E5a84b256B`**
+
+Parsing Rules:
+
+* Fields are separated by semicolons (;) or whitespace  
+* Field order is not significant  
+* Unknown fields SHOULD be ignored for forward compatibility
+
+Verification:  For Handle-Link Statement evidence (human-readable text), the verifier MUST:
+
+1. Parse the evidence string and extract key-value pairs using semicolon (;) or whitespace as delimiters.  
+2. Validate version: Confirm **`v=1`** is present.  
+3. Extract **`controller`**: Parse the controller value, which MUST be a valid DID (e.g., did:pkh:eip155:66238:0x..., did:handle:twitter:alice).  
+4. Confirm controller binding: The extracted controller MUST match:  
+   1. The attestation's **`linkedId`** (for Linked Identifier attestations), or  
+   2. The attestation's **`keyId`** (for Key Binding attestations)  
+5. Confirm subject control: The URL where the evidence is hosted MUST be controlled by the attestation's **`subject`**. For example:  
+   1. A Twitter profile URL is controlled by the did:handle:twitter:\* subject  
+   2. A GitHub profile URL is controlled by the did:handle:github:\* subject
+
+If any of these checks fail, the evidence MUST be rejected.
+
+Note: This format is intentionally identical to the DNS TXT record format used for did:web verification, enabling consistent tooling across verification methods.
+
+#### 5.3.5.3 Verification Procedure
 
 Verifiers MUST validate a **`evidence-pointer`** proof using the following procedure:
 
@@ -536,7 +568,7 @@ Verifiers MUST validate a **`evidence-pointer`** proof using the following proce
 2. Determine evidence mode: The fetched content MUST satisfy one of the evidence modes defined above (Embedded Cryptographic Proof or Handle-Link Statement).  
 3. Verify evidence:  
    1. If the evidence contains an embedded cryptographic proof, the verifier MUST extract and validate it according to its Proof Type specification in this section (§5.3.2–§5.3.3).  
-   2. If the evidence is a handle-link statement, the verifier MUST extract the referenced identifier and apply the attestation-specific checks defined in the Reputation Specification.  
+   2. If the evidence is a handle-link statement, the verifier MUST follow the verification procedure described in 5.3.5.2.  
 4. Accept/reject: The proof is valid only if the evidence artifact is retrievable and satisfies the verification requirements for its evidence mode and attestation context.
 
 ### 5.3.6 Encoded Value Transactions (**`tx-encoded-value`**)

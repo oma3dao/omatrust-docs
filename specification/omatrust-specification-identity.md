@@ -398,16 +398,16 @@ To verify this method, the Issuer MUST retrieve the DID Document located at **`[
 
 * **dns:\<domain\>**: The identifier "dns:\<domain\>" asserts control of \<domain\> via a DNS TXT record.  The Owner MUST publish a TXT record at:   **`_omatrust.<domain>`**. The TXT value MUST be a sequence of key=value pairs separated by semicolons or spaces:
 
-  v=1        (protocol version, fixed to "1")
+  v=1              (protocol version, fixed to "1")
 
-  controller=...   (one or more identifiers in CAIP-10 format)
+  controller=   (one or more identifiers in DID format)
 
 
 Examples:
 
 ```
-v=1;controller=eip155:1:0x89a932207c485f85226d86f7cd486a89a24fcc12
-v=1 controller=eip155:1:0x1111... controller=eip155:1:0x2222...
+v=1;controller=did:pkh:eip155:1:0x89a932207c485f85226d86f7cd...
+v=1 controller=did:pkh:eip155:1:0x11... controller=eip155:1:0x22
 ```
 
 Multiple **`controller`** values indicate co-controllers. For rotation, both old and new controllers SHOULD be published during an overlap period. If the apex cannot be modified, the record MAY be published on a subdomain (e.g., id.example.com), in which case the identifier string is **`did:web:id.example.com`**. Issuers MUST query authoritative name servers and SHOULD validate DNSSEC when available. The minting wallet MUST match one of the **`controller`** values to prove ownership.

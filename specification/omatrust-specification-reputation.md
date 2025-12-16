@@ -235,13 +235,11 @@ A Linked Identifier attestation MUST conform to the following structure.  The no
 | attester | Y | string | Attester ID. DID of the entity making the assertion. This entity has verified the linkage between the **`subject`** and **`linkedId`**. |
 | subject | Y | string | Subject ID. DID of the subject (such as **`did:pkh`** for contract addresses or **`did:web`** for web domains) that is claimed to control the linked identifier.  This SHOULD be the DID the clients will most often search for (see below) |
 | linkedId | Y | string | Linked Identifier. The Controller identifier being claimed as controlled by the subject (e.g., a **`did:web`**, **`did:handle`**).  |
+| revoked | N | bool | Indicates if this linked identifier attestation has been revoked. |
 | proofs | N | \[object\] | Required if **`method`** \= **`proof`** or **`social-post`**.  Each entry MUST be a Proof wrapper. Proof wrapper schema and **`proofType`**\-specific verification are defined in the Proof Specification. |
 | issuedAt | Y | integer | Issued Date. Unix timestamp (in seconds) when the attestation was issued. |
 | effectiveAt | N | integer | Effective Date. Optional Unix timestamp (in seconds) when the assessment becomes effective. |
 | expiresAt | N | integer | Expiration Date. Unix timestamp (in seconds) after which the assessment expires. Leave empty if the assessment does not expire. |
-| revoked | N | bool | Indicates if this linked identifier attestation has been revoked. |
-| @context | N | string | Optional JSON-LD context URI for semantic processing. |
-| @type | N | string | Semantic type identifier, typically 'LinkedIdentifierAttestation'. |
 
 Note: To ensure search efficiency across common indexers and to designate the most durable identity, the Subject ID SHOULD represent the primary, canonical root of the entity (e.g., an organizational **`did:web`**, an immutable **`did:pkh`** for a smart contract, or a **`did:handle`** for a social account that wants to bind keys). Identifiers with higher rotation frequency (e.g., a **`did:pkh`** for a signing key) SHOULD be assigned to the **`linkedId`** field.
 
@@ -315,14 +313,16 @@ A Key Binding attestation MUST conform to the following structure. The normative
 
 | Field | Req | Format | Description |
 | ----- | ----- | ----- | ----- |
-| attester | Y | string | Attester ID. DID of the entity making the assertion. This entity has verified the linkage between the subject and linkedId. |
+| attester | Yes | string | Attester ID. DID of the entity making the assertion. This entity has verified the linkage between the subject and linkedId. |
 | subject | Yes | string | The DID of the entity that authorizes the key. Ownership MUST be verified. |
 | keyId | Yes | string | The DID that represents the key (e.g.- **`did:pkh`**). |
 | publicKeyJwk | No | object | JWK of the keyId.  Includes the full public key, type, and curve. |
 | keyPurpose | Yes | \[string\] | A list of permitted uses for the key. |
-| proofs | Yes | \[object\] | At least one **Proof** object that uses **`proofPurpose`**`=shared-control` |
-| expiresAt | No | integer  | Unix timestamp |
 | revoked | No | boolean | Used if the transport does not support natively |
+| proofs | Yes | \[object\] | At least one **Proof** object that uses **`proofPurpose`**`=shared-control` |
+| issuedAt | Yes | integer | Issued Date. Unix timestamp (in seconds) when the attestation was issued. |
+| effectiveAt | No | integer | Effective Date. Optional Unix timestamp (in seconds) when the assessment becomes effective. |
+| expiresAt | No | integer  | Unix timestamp |
 
 The **`keyPurpose`** field is an array of strings defining the authorized operations for the bound key. These values map directly to [W3C DID Core Verification Relationships](https://www.google.com/search?q=https://www.w3.org/TR/did-core/%23verification-relationships):
 
@@ -511,20 +511,12 @@ A User Review attestation MUST conform to the structure defined in user-review.s
 | ----- | ----- | ----- | ----- |
 | attester | Yes | string | The DID of the entity submitting the review. This MAY be the reviewer (self-attestation) or an intermediary platform acting on behalf of the reviewer. |
 | subject | Yes | string | The DID representing the entity being reviewed (e.g., an application, service, protocol, or website). All usage-related proofs MUST refer to this entity as the target of interaction. |
-| organization | No | string | The DID of the organization that controls the subject. Used when **`subject`** is the service, not an entity. |
-| ratingValue | Yes | integer | A numerical rating expressing the reviewer’s evaluation of the subject.  High rating can be a maximum of 5\.  Low rating can be a minimum of 1\. |
 | version | No | string | Version of the **`subject`** (e.g., app or API version). |
-| summary | No | string | Maximum length of 200 chars. |
+| ratingValue | Yes | integer | A numerical rating expressing the reviewer’s evaluation of the subject.  High rating can be a maximum of 5\.  Low rating can be a minimum of 1\. |
 | reviewBody | No | string | Max length of 500 chars. |
-| author | No | string | Any string that describes the author (DID, name, etc.) |
 | screenshotUrls | No | \[string\] | Array of URL strings that point to screenshots. |
 | proofs | No | \[object\] | See below |
-| payloadVersion | No | string | See below |
-| PayloadSpecURI | No | string | See below |
-| PayloadSpecDigest | No | string | See below |
-| effectiveAt | No | integer |  |
-| issuedAt | No | integer |  |
-| expiresAt | No | integer |  |
+| issuedAt | Yes | integer |  |
 
 ### 7.1.3 Proof Usage
 
@@ -585,6 +577,35 @@ The Proof Parameter values MUST be:
 | Controller | **`attester`** | **`attester`** represents the reviewer whose account existence on the service is being proven. |
 | proofPurpose | **`shared-control`** |  |
 
+### 7.1.4 Updates and Supersession
+
+#### 
+
+Attestations are immutable once created. To update a review, the attester MUST create a new User Review attestation for the same Subject. The new attestation supersedes any previous reviews from the same Attester for that Subject.
+
+Clients MUST implement supersession logic when displaying reviews:
+
+* When multiple User Review attestations exist from the same Attester for the same Subject, clients MUST consider only the most recent attestation (determined by attestation **`issuedAt`**).  
+* Clients MAY provide UI to view superseded reviews as "review history" if desired.
+
+### 7.1.5 Verification
+
+#### 
+
+A User Review attestation’s verification is a multi-step process that establishes its authenticity, data integrity, and the strength of the claim, which ultimately determines the Trust Level of the review.
+
+Because User Review attestations MAY contain cryptographic Proof objects, verification primarily relies on two models: Proof-based (trustless) validation and Trusted-attester validation, as described in §5.1.
+
+Clients MUST apply the following rules to evaluate a User Review:
+
+1. A review that satisfies one of the following SHOULD qualify for a higher Trust Level.  
+   1. Proof-based Validation (Trustless)  
+   2. Trusted-Attester Validation  
+2. The attestation MUST conform to the structure and constraints defined in the User Review JSON schema.  
+3. Required fields, including attester and subject, MUST be present and well-formed (i.e., valid DIDs).  
+4. The issuedAt field MUST be a non-negative Unix timestamp.  
+5. If there are multiple attestations with the same Attester, Subject, and version only the most recent one SHOULD be considered.
+
 ## 7.2 User Review Response Schema
 
 ### 7.2.1 Purpose
@@ -610,7 +631,15 @@ A User Review Response attestation MUST conform to the normative JSON schema use
 | responseBody | Yes | string | Max length of 500 chars. |
 | issuedAt | Yes | integer |  |
 
-### 7.2.3 Verification
+### 7.2.3 Updates and Supersession
+
+#### 
+
+Attestations are immutable once created. However, clients SHOULD NOT limit the number of attestations to evaluate for a given **`refUID`**.
+
+### 
+
+### 7.2.4 Verification
 
 A User Review Response attestation is considered verifiable when it can be consistently linked to an existing User Review and when the responder identity is coherent with that linkage. Because this schema does not carry Proof objects, verification relies on reference resolution and field consistency only.
 
@@ -634,7 +663,8 @@ Clients verifying a User Review Response MUST apply the following rules:
       5. If coherence cannot be established, the response MUST be treated as not verified.  
 4. Field Validity  
    1. **`responseBody`** MUST be present.  
-   2. **`issuedAt`**, if present, MUST be a non-negative Unix timestamp representing issuance time.
+   2. **`issuedAt`**, if present, MUST be a non-negative Unix timestamp representing issuance time.  
+5. Updates
 
 If all rules (1)–(2) pass, the response is validly linked to the referenced User Review. Rules (3)–(4) affect trust UI and scoring but do not invalidate linkage.
 
@@ -659,10 +689,13 @@ An Endorsement attestation MUST conform to the normative JSON schema endorsement
 | organization | No | string | DID of a parent organization when endorsing a service/resource that belongs to that organization. Omit when endorsing an organization directly. |
 | version | No | string | Optional semantic version of the endorsed subject. Used if **`subject`** is a service with versioning. |
 | policyUri | No | string | Optional URI pointing to the formal criteria or process used for approvals. |
-| issuedAt | No | integer |  |
+| payload | No | integer | Optional evolvable details about the endorsement.  See Section 8\. |
+| payloadVersion | N | string |  |
+| payloadSpecURI | N | string |  |
+| payloadSpecDigest | N | string |  |
+| issuedAt | Yes | integer |  |
 | effectiveAt | No | integer |  |
 | expiresAt | No | integer |  |
-| payload | No | integer | Optional evolvable details about the endorsement.  See Section 8\. |
 
 ### 7.3.3 Endorsement Verification
 
@@ -739,19 +772,24 @@ A Certification attestation MUST conform to the normative JSON schema certificat
 | attester | Yes | string | DID of the assessor issuing the security assessment. |
 | subject | Yes | string | DID of the product, system, service, or organization being assessed. |
 | organization | No | string | DID of the parent organization that owns or governs the certified subject.  |
-| assessmentKind | Yes | string | Declared kind of assessment (e.g., static analysis, pen test). Values are registry-driven via x-oma3-enum. Unknown values are valid unless a client’s local policy rejects them. |
+| version | No | string | Optional software version of the certified subject. Omit when certifying the subject independent of software version. |
+| versionHW | No | string | Optional hardware version of the certified subject, if applicable. Omit when hardware version is not relevant. |
+| subjectURI | No | string | Optional URI controlled by the subject that provides mutable, human-readable metadata. |
+| programId | Yes | string | DID of the certification program under which this certification was issued. Program release version should be included in the DID. |
+| programURI | No | string | Optional URI for mutable, human-readable certification program info. |
+| assessor | Yes | string | DID of the authorized assessor (test lab, auditor) who evaluated the subject |
+| assessorURI | No | string | Optional URI with human-readable info about the assessor (e.g., homepage, credentials). |
+| certificationLevel | No | string | Optional classification level of certification (e.g., 'Gold', 'Level 2'). |
 | outcome | No | string | Values can be **`pass`** or **`fail`**. If omitted, outcome MUST be interpreted as **`pass`**. |
 | reportURI | N | string | Optional URI of an off-chain assessment report. |
 | reportDigest | N | object | Optional digest enabling integrity verification of reportURI content. Includes algorithm and canonicalization metadata.  Uses the same fields verification as **`payloadSpecDigest`** (Section 8). |
-| version | No | string | Optional software version of the certified subject. Omit when certifying the subject independent of software version. |
-| versionHW | No | string | Optional hardware version of the certified subject, if applicable. Omit when hardware version is not relevant. |
-| issuedAt | Yes | integer |  |
-| effectiveAt | No | integer |  |
-| expiresAt | No | integer |  |
 | payload | N | object |  |
 | payloadVersion | N | string |  |
 | payloadSpecURI | N | string |  |
 | payloadSpecDigest | N | string |  |
+| issuedAt | Yes | integer |  |
+| effectiveAt | No | integer |  |
+| expiresAt | No | integer |  |
 
 ## 
 
@@ -979,6 +1017,7 @@ Payload metadata fields describe the structure, versioning, and integrity of pay
 
 | Payload Fields | Description |
 | ----- | ----- |
+| payload | The payload object. |
 | payloadVersion | Identifies the version of the payload structure (**`x.y.z`**). |
 | payloadSpecURI | Points to a document that defines the payload’s schema or normative interpretation rules. |
 | payloadSpecDigest | Hash of the payload’s schema for schema integrity confirmation. |
@@ -1101,7 +1140,7 @@ When a DID field supports did:handle via **`x-oma3-did-methods`**, this extensio
 * Verifiers MUST accept any syntactically valid **`did:handle:<platform>:<username>`** DID, even if the platform is not listed, unless strict constraints are declared elsewhere.  
 * This extension does not restrict validity.
 
-### 9.3.1 x-oma3-skip-reason
+### 9.3.7 x-oma3-skip-reason
 
 **`x-oma3-skip-reason`** indicates that a field should not be surfaced in the attestation creation UI, and explains why. The extension is a structured hint about data entry responsibility, not a validity rule.
 
@@ -1116,6 +1155,22 @@ Notes:
 * **`x-oma3-skip-reason`** MUST NOT affect structural validity or verification outcomes.  
 * Implementations MAY use the tag to decide whether a field should be user-editable, auto-populated, or hidden in default UI.  
 * If a field is present in an attestation, clients MUST preserve it in storage, indexing, and transmission regardless of skip reason.
+
+### 9.3.8 x-oma3-render
+
+**`x-oma3-render`** indicates how an object or array field should be presented in attestation creation UIs. The extension is a structured hint about input presentation, not a validity rule.
+
+Fields may be marked with **`x-oma3-render`** to control UI rendering behavior:
+
+* **`expanded`** — The field's sub-properties should be rendered as individual form inputs. This is the default behavior for object types when no value is specified.  Sub-properties should include UI fields, such as **`title`** and **`description`**.  
+* **`raw`** — The field should be rendered as a single text input accepting raw JSON. Users paste or type the complete JSON object/array rather than filling individual sub-fields. This is appropriate for technical data structures (e.g., JWKs, digests) that are typically generated or exported from external tools
+
+Notes:
+
+* **`x-oma3-render`** MUST NOT affect structural validity or verification outcomes.  
+* Implementations MAY use the tag to decide whether an object field should be expanded into sub-fields or presented as a single JSON input.  
+* When **`x-oma3-render`** is **`raw`**, implementations SHOULD validate that the input parses as valid JSON and conforms to the field's schema before submission.  
+* Local overrides take precedence: a field definition MAY override the render mode inherited from a **`$ref`** reference.
 
 # 
 
