@@ -1,8 +1,6 @@
 # **OMATrust Whitepaper**
 
-**Version 1.0** | **September 2025** | **OMA3**
-
-—
+**Version 1.1** | **January 2026** | **OMA3**
 
 # **1\. Executive Summary**
 
@@ -10,23 +8,23 @@ The open internet is missing a universal trust layer. Today, trust depends on fr
 
 OMA3 is a Swiss non-profit consortium addressing this gap by building trust infrastructure for the open internet. The architecture has two integrated layers:
 
-1. **OMATrust**\- a cross-chain verification protocol where developers tokenize apps, APIs, and websites in the **OMA3 App Registry**, auditors publish cryptographic attestations, and users or AI agents can instantly verify legitimacy before trusting a service.    
+1. **OMATrust**\- a cross-chain **verification protocol** where anyone, including end users and trusted third parties, can publish provable cryptographic attestations on any internet service, allowing humans and machines to verify legitimacy before using a service.  This reputation/attestation framework, combined with a standards-based **identity registry**, brings **app store level trust** to the open internet.  
      
-2. **OMAChain**\- an Ethereum Layer 2 that serves as the **canonical coordination layer** for OMATrust. OMAChain ensures token uniqueness through deduplicator contracts, lists relevant attestation services through registry contracts, provides advanced composability by allowing one transaction to trigger multiple contract writes, and enables gas subsidization of critical trust functions like attestations so users are not burdened with fees. 
+2. **OMAChain**\- an Ethereum Layer 2 that hosts **canonical coordination** contracts and provides additional **utility** and **ease of use** to OMATrust such as tracking OMAChain data across chains, subsidizing gas to reduce friction for OMATrust end users, and indexing cross-chain data in a decentralized manner.
 
 This two-layer system solves two critical challenges:
 
-* **Credible Neutrality**\- a non-profit governance model that welcomes the whole internet ecosystem to cooperate on shared infrastructure.    
+* **Credible Neutrality**\- decentralized control is a requirement to get the whole internet ecosystem to cooperate on shared infrastructure.    
     
-* **Sustainable Economics**\- a token model where protocol revenue (from verification and query demand) drives value, while subsidization ensures frictionless adoption.
+* **Sustainable Economics**\- a native chain token and protocol revenue (from verification and query demand) allow OMATrust to be self-maintaining without relying on the generosity and influence of centralized entities.
 
-OMA3 is launching at a pivotal moment. As the internet becomes more automated, driven by bots and AI agents, it needs more reliable, machine-verifiable trust signals. By combining cross-chain registries, cryptographic attestations, and subsidized coordination on OMAChain, OMATrust provides the foundation for a verifiable, AI-ready internet.
+OMATrust is launching at a pivotal moment. As the internet becomes more automated, driven by bots and AI agents, it needs more reliable, machine-verifiable trust signals. By combining cross-chain registries, cryptographic attestations, and subsidized coordination on OMAChain, OMATrust provides the foundation for a verifiable, AI-ready internet.
 
 OMA3 is more than a standards organization — it is building the **trust layer of the open internet**.
 
 # **2\. The Problem: A Trust Crisis in the Open Internet**
 
-The internet has become the backbone of commerce, communication, and entertainment — yet it was never designed with an **effective, universal trust layer**. Existing mechanisms like SSL certificates or platform reviews solve small parts of the problem, but they don’t establish whether a service is legitimate, secure, or verifiable across platforms. Every day, people and businesses still face the same basic question: **“Can I trust this service?”**
+The internet is the backbone of commerce, communication, and entertainment — yet it was never designed with an **effective, universal trust layer**. Existing mechanisms like SSL certificates or platform reviews solve small parts of the problem, but they are incomplete. Every day, people and businesses still face the same basic question: **“Can I trust this service?”**
 
 For individual users, the risks are familiar:
 
@@ -54,7 +52,7 @@ The mechanisms we rely on today were never designed to provide universal, progra
     
 * **Audits and certifications** are published as PDFs or badges on websites. Even if an AI model can parse the document, neither humans nor machines can know if it’s authentic, current, or tamper-proof.    
     
-* **Centralized reputation systems** like Amazon reviews or App Store ratings work only inside their platforms. Even there, checks are partial — Apple verifies an app binary but not its servers, which can change at any time. Vulnerabilities slip through.    
+* **Centralized reputation systems** like Amazon reviews or App Store ratings work only inside their platforms. Even there, checks are partial — Apple verifies an app binary but not the app’s servers, which can change at any time.   
     
 * **The broader internet** — websites and APIs — lacks any consistent reputation system. APIs power critical services like weather, stock prices, payments, and marketplaces, yet there’s no standard way to verify their legitimacy or security.
 
@@ -72,7 +70,7 @@ This is where blockchain changes the equation: for the first time, we can align 
 
 The rise of AI agents makes this problem existential. Bots have quietly dominated internet traffic for years — scraping, crawling, and automating interactions at massive scale. Even without full-scale agent adoption, the lack of a verifiable trust layer has already created systemic vulnerabilities.
 
-Humans can sometimes detect scams — they hesitate before clicking a suspicious link. AI agents, however, operate at **machine speed and global scale**. They may be “smarter” than humans, but intelligence alone isn’t enough. What matters is speed and scale.
+Humans can sometimes detect scams — they hesitate before clicking a suspicious link. AI agents, however, operate at **machine speed and global scale**. They may be “smarter” than humans, but intelligence alone isn’t enough in this new world.
 
 When a vulnerability is disclosed today, it is often exploited immediately across the internet. The same dynamic applies to unverified services:
 
@@ -90,12 +88,12 @@ In short: the open internet cannot scale safely into an AI-driven, agent-powered
 
 # **3\. The Solution: OMATrust and OMAChain**
 
-The shortcomings of today’s trust mechanisms are clear: walled gardens, unverifiable PDFs, and social proof that can be manipulated. What the open internet needs is a **neutral, verifiable, and economically sustainable trust layer**. OMA3 delivers this through a two-layer architecture that is both cross-chain and practically deployable today.
+The shortcomings of today’s trust mechanisms are clear: walled gardens, unverifiable PDFs, and social proof that can be manipulated. What the open internet needs is a **neutral, verifiable, and economically sustainable trust layer**. OMA3 delivers this through a two-layer architecture.
 
 ## **3.1 Overview: Two Integrated Layers**
 
-1. **OMATrust** — OMA3’s first cross-chain decentralized application, where developers tokenize apps, APIs, and websites, auditors publish cryptographic attestations, and users or AI agents can instantly verify legitimacy before engaging with a service.    
-2. **OMAChain** — an Ethereum Layer 2 that serves as the canonical coordination environment for OMA3. It enforces uniqueness, enables composability, and subsidizes trust functions so adoption is frictionless.
+1. **OMATrust** — OMA3’s first cross-chain decentralized solution, where developers tokenize apps, APIs, and websites, auditors and users publish cryptographic attestations, and humans or agents can verify legitimacy before engaging a service.    
+2. **OMAChain** — an Ethereum Layer 2 that serves as the canonical coordination environment for OMA3. It tracks OMATrust cross-chain, enables composability, and subsidizes trust functions so adoption is frictionless.
 
 Together, these two layers create a **global trust fabric** for the open internet.
 
@@ -103,31 +101,41 @@ Together, these two layers create a **global trust fabric** for the open interne
 
 OMATrust is the first expression of OMA3’s vision: **turning trust into a machine-verifiable primitive**.
 
-### **3.2.1 The App Registry**
+### **3.2.1 Attestation Framework**
 
-* A foundational registry where apps, APIs, websites, and services are tokenized as onchain assets.    
-    
-* It provides the ecosystem a persistent, verifiable identity that can be referenced across chains.    
-    
-* Canonical uniqueness is enforced via coordination contracts on OMAChain, preventing the same app from being tokenized multiple times on different networks.
-
-### **3.2.2 Attestations**
-
-* Independent auditors and security firms publish cryptographic attestations linked to App Registry entries.    
-    
-* OMA3 leverages existing attestation standards so that proofs are transparent, tamper-resistant, and interoperable across chains.    
-    
+* Allows anyone to publish cryptographic attestations on any internet service.   
+     
 * Types of attestations include:    
     
-  *   **Security audits** (e.g., code verification, penetration testing).    
-  *   **Compliance certifications** (e.g., GDPR, SOC2).    
-  *   **User reviews** (where both humans and AI agents contribute structured feedback).
+  * **Security audits** (e.g., code verification, penetration testing).    
+  * **Compliance certifications** (e.g., GDPR, SOC2).    
+  * **User reviews** (where both humans and AI agents contribute structured feedback).  
+  * **Identity linking** (which keys belong to what entity)
 
-### **3.2.3 Verification** 
-
-* End users and AI agents can instantly query tokenized entries and their attestations before engaging.    
+* Allows attesters to prove interaction with a service to prevent sybil and spam attacks.  
     
-* No more digging through PDFs or relying on badges — verification becomes programmatic, universal, and real-time.
+* Based on existing attestation systems so that proofs are transparent, tamper-resistant, and interoperable across chains.  
+
+
+### **3.2.2 Verification Standards**
+
+### 
+
+* ### End users and AI agents can instantly query tokenized entries and their attestations before engaging.  
+
+  ### 
+
+* ### No more digging through PDFs or relying on badges — verification becomes programmatic, universal, and real-time.
+
+### 
+
+### **3.2.3 Identity Registry**
+
+* An app registry where apps, APIs, websites, and services are tokenized as onchain assets.    
+    
+* It provides the ecosystem a persistent, verifiable identity that can be referenced across chains, completing the promise of decentralized app store level trust.  
+    
+* Compatible with emerging community standards such as Ethereum’s ERC-8004.
 
 ### **3.2.4 User Reputation**
 
@@ -149,11 +157,12 @@ OMATrust addresses the other side of the equation: trust for services (apps, API
 
 While OMATrust functions across chains, OMAChain provides the core coordination layer that makes the system scalable, composable, and user-friendly.
 
-### **3.3.1 Canonical Uniqueness**
+### **3.3.1 Multi Chain Management**
 
-* **Deduplicator contracts** on OMAChain ensure each app, API, or service can only be tokenized once globally.  This prevents confusion and maintains a single source of truth across ecosystems.    
-    
-* **Attestation Registry** contracts help clients find all the attestations on an application, significantly reducing effort in using OMATrust.
+* **Decentralized Data** infrastructure helps clients find and analyze attestations across all chains, significantly reducing effort and reliance on centralized indexers.
+
+* **Coordination contracts** on OMAChain track OMATrust contracts and apps across chains.  For example, deduplicator contracts ensure each app, API, or service can only be tokenized once globally.  This prevents confusion and maintains a single source of truth across ecosystems.  
+
 
 ### **3.3.2 Composability**
 
@@ -167,7 +176,7 @@ While OMATrust functions across chains, OMAChain provides the core coordination 
 
 * Trust functions like reviews or attestations must be free for users to encourage adoption.    
     
-* OMAChain introduces a paymaster model to subsidize these writes.    
+* OMAChain allows OMA3 to subsidize these attestation writes.    
     
 * Subsidization will initially be funded by OMA3’s treasury reserves, with the option to expand to other chains as resources grow.
 
@@ -177,7 +186,7 @@ While OMATrust functions across chains, OMAChain provides the core coordination 
     
 * OMAChain is governed by OMA3, a Swiss non-profit consortium, ensuring **credible neutrality from day one** (Section 7).    
     
-* The roadmap (Section 8\\)  includes further decentralization of OMAChain’s sequencer and indexing infrastructure, giving the ecosystem more resilience and neutrality over time.
+* The roadmap (Section 8\)  includes further decentralization of OMAChain’s sequencer and indexing infrastructure, giving the ecosystem more resilience and neutrality over time.
 
 ## **3.4 Benefits and Use Cases of the Two-Layer System**
 
@@ -193,31 +202,25 @@ End users can see verifiable reviews and certifications before downloading an ap
 
 ### **3.4.3 Auditors and Certifiers**
 
-Security firms and compliance bodies can publish proofs directly to the App Registry. Instead of unverifiable PDFs or website badges, attestations are cryptographic and machine-readable. This increases transparency and raises the standard for what it means to be "audited."
+Security firms and compliance bodies can publish proofs directly to the Identity Registry. Instead of unverifiable PDFs or website badges, attestations are cryptographic and machine-readable. This increases transparency and raises the standard for what it means to be "audited."
 
 ### **3.4.4 Developers**
 
-App developers can tokenize their software once in the App Registry, gaining global discoverability. Their app's reputation — reviews, certifications, and audit attestations — travels with it across ecosystems. This reduces fragmentation and makes onboarding into new marketplaces or environments frictionless.
+App developers can tokenize their software once in the Identity Registry, gaining global discoverability. Their app's reputation — reviews, certifications, and audit attestations — travels with it across ecosystems. This reduces fragmentation and makes onboarding into new marketplaces or environments frictionless.
 
 ### **3.4.5 Enterprises**
 
 Enterprises operating APIs in finance, healthcare, or government often require strict compliance (GDPR, HIPAA, SOC2). OMATrust allows these certifications to be cryptographically verified, so integrations can be automated without relying on manual trust assumptions.
 
+### **3.4.6 x402 Participants**
+
+OMA3 believes x402- an internet micropayment protocol invented by Coinbase and backed by Google, Cloudflare, and others- will be the foundational economic mechanism for the machine-driven internet.  OMA3 is contributing multiple extensions to x402 that allow it to integrate seamlessly with OMATrust.
+
 # **4\. OMATrust Protocol**
 
 OMATrust is OMA3’s first cross-chain decentralized application. Its role is to make trust a machine-verifiable primitive, replacing PDFs, badges, and siloed reviews with cryptographic proofs that anyone — human or AI — can query in real time.
 
-## **4.1 App Tokens: A Foundation for Trust**
-
-At the heart of OMATrust are **app tokens**, represented as NFTs. Each tokenized app, API, or website becomes a verifiable onchain identity.
-
-* On Ethereum and other EVM chains, app tokens follow the ERC-721 standard, with an upcoming Ethereum EIP for an ERC-721 extension that formalizes app-specific metadata.    
-* Parallel standards will be defined for other virtual machines, ensuring true **cross-chain compatibility**.    
-* Once minted, an app token serves as the anchor point for all attestations and reviews associated with that service.
-
-This simple but powerful primitive — turning software into NFTs — enables trust signals to be indexed, referenced, and queried consistently across the internet.
-
-## **4.2 Attestations: Verifiable Proofs**
+## **4.1 Attestations: Verifiable Proofs**
 
 OMA3 leverages **existing attestation projects** for reliability rather than reinventing the wheel, while extending them to cover the entire internet, not just Web3.
 
@@ -230,18 +233,28 @@ Types of attestations supported include:
 
 * **Security audits** from independent firms.    
 * **Compliance certifications** (e.g., ISO 27001, SOC2).    
-* **User reviews**, where both humans and AI agents contribute structured feedback.
+* **User reviews**, where both humans and AI agents contribute structured feedback.  
+* **Identity bindings**, so users can cryptographically prove shared ownership of online identities (e.g.- social handles) and signing keys (e.g.- blockchain accounts).
+
+## **4.2 App Tokens: A Foundation for Trust**
+
+OMATrust allows service providers to register **app tokens**, represented as NFTs. Each tokenized app, API, or website becomes a verifiable onchain identity.
+
+* On Ethereum and other EVM chains, app tokens follow the ERC-721 standard, with an upcoming Ethereum EIP for an ERC-721 extension that formalizes app-specific metadata.    
+* Parallel standards will be defined for other virtual machines, ensuring true **cross-chain compatibility**.    
+* Once minted, an app token serves as an additional anchor point for attestations and reviews associated with that service.
+
+This simple but powerful primitive — turning software into NFTs — enables trust signals to be indexed, referenced, and queried consistently across the internet.
 
 ## **4.3 Verification and Attestation Flows**
 
 ### **4.3.1 Verification Flow (for clients, users, or AI agents):**
 
 1. **Derive DID** — For example, from a URL (did:web) or contract address (did:eth).    
-2. **Query Deduplicator** — Confirm app uniqueness and identify the chain where the token was minted.    
-3. **Query App Token NFT** — Retrieve the token associated with the DID.    
-4. **Query OMAChain Coordination Contract** — Find locations of associated attestations.    
-5. **Search for Attestations** — Collect and evaluate relevant proofs.    
-6. **Decision** — Determine whether to engage with the service.
+2. **Query OMAChain Coordination Contract** — Find locations of associated attestations.    
+3. **Search for Attestations** — Collect and evaluate relevant proofs.    
+4. **Query App Token NFT** — Retrieve the token associated with the DID to gain more trust information.  
+5. **Decision** — Determine whether to engage with the service.
 
 ### **4.3.2 Attestation Flow (for auditors, users, or services):**
 
@@ -256,7 +269,7 @@ OMATrust thus establishes the first programmatic, cross-chain verification layer
 
 OMAChain is an **Arbitrum Orbit** Layer 2 that provides the coordination layer OMATrust needs to scale. It settles to Ethereum, stays fully EVM compatible, and aligns with the Orbit ecosystem’s path toward sequencer decentralization. Beyond coordination, OMAChain integrates **Shinzo** to deliver two things that the trust stack requires:
 
-1. decentralized, verifiable data access and    
+1. decentralized, verifiable data access and  
 2. an economic model for high-volume reads.
 
 ## **5.1 Why Arbitrum Orbit**
@@ -337,17 +350,17 @@ This credible neutrality is the foundation of trust: it gives enterprises, devel
 
 # **8\. Roadmap**
 
-OMA3 has a staged roadmap that balances rapid deployment with long-term goals. Each milestone expands adoption while reinforcing OMA3’s mission to provide a neutral trust fabric for the open internet.
+OMA3 has a staged roadmap that balances rapid deployment with long-term goals. Each milestone expands adoption while reinforcing OMA3’s mission to provide a neutral trust fabric for the open internet.  OMA3 has already launched a development testnet for OMAChain with initial OMATrust contracts.  Future milestones are as follows:
 
-## **2025: OMAChain & OMATrust Launch**
+## **Early 2026: Mainnet Launch**
 
-OMAChain will launch as an **Arbitrum Orbit Layer 2,** leveraging the security of Ethereum. At launch, OMA3 will deploy the **OMATrust smart contracts** on OMAChain, including the App Registry and related attestation contracts.  
+OMAChain will launch the mainnet of its **Arbitrum Orbit Layer 2,** leveraging the security of Ethereum. At launch, OMA3 will deploy **Ethereum Attestation Service** smart contracts and **OMATrust schemas**.
 
-This marks the beginning of OMA3’s utility era: developers can tokenize apps, auditors can publish cryptographic attestations, and users can submit gas-subsidized reviews. Importantly, it also marks the moment OMA becomes a **utility token under FINMA classification**, enabling public trading of OMA.  Soon after OMA3 will launch deduplicator and attestation registry contracts, as well as an integrated onchain/offchain-accessible attestation service.
+This marks the beginning of OMA3’s utility era: auditors can publish cryptographic attestations and users can submit gas-subsidized reviews. Importantly, it also marks the moment OMA becomes a **utility token under FINMA classification**, enabling public trading of OMA.  Soon after OMA3 will launch the identity registry, deduplicator and attestation registry contracts.
 
-## **Early 2026: Cross-Chain Expansion & Developer Tooling**
+## **Mid 2026: Cross-Chain Expansion & Developer Tooling**
 
-Once OMAChain is live, OMA3 will expand OMATrust to **other major blockchains** — including Ethereum, Solana, and Cosmos — ensuring the trust layer is accessible wherever developers build. To accelerate adoption, OMA3 will release **developer tooling** that makes it simple to write attestations, read trust data, and integrate verifiable signals directly into applications and AI agents.
+Once OMAChain is live, OMA3 will expand OMATrust to **other major blockchains** ensuring the trust layer is accessible wherever developers build. To accelerate adoption, OMA3 will release **developer tooling** that makes it simple to write attestations, read trust data, and integrate verifiable signals directly into applications and AI agents.
 
 The goal is to remove friction: developers should be able to plug OMATrust into their workflows as easily as they integrate payment APIs or identity providers today.
 
@@ -359,12 +372,12 @@ This integration also enables OMA3’s **read revenue model**: light usage is av
 
 ## **Early 2027: Expansion Beyond OMATrust**
 
-With OMATrust established, OMA3 will introduce **additional protocols** that extend the App Registry’s utility. Examples include:
+With OMATrust established, OMA3 will introduce **additional protocols** that extend the OMATrust’s utility. Examples include:
 
 \* **Inter World Portaling System (IWPS)** — integrated with OMATrust to enable trusted cross-world identity and access.    
 \* **MMXPGs** — massively composable game primitives that rely on OMATrust for cross-game interoperability.    
 \* **Autonomous Agent Access to Virtual Worlds** — creating a standardized way for AI agents to interact safely with virtual environments.    
-\* **Spatial Store** — a decentralized marketplace layer built on top of the App Registry.    
+\* **Spatial Store** — a decentralized marketplace layer built on top of the Identity Registry.    
 \* **Onchain Governance for OMA3** — moving association governance processes onchain, while maintaining the credible neutrality of the Swiss association.
 
 This stage expands OMA3 from a single protocol (OMATrust) into a **multi-protocol trust-based ecosystem**.
