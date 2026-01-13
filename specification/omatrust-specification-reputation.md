@@ -2,8 +2,6 @@
 
 ## Extension to the OMATrust architecture focused on reputation 
 
-# 
-
 # 1\. Executive Summary
 
 The OMATrust Reputation Specification defines the trust and reputation layer for applications registered within the OMATrust ecosystem. While the [OMATrust Identity Specification](https://github.com/oma3dao/omatrust-docs/blob/main/specification/omatrust-specification.md) provides decentralized identity, DID ownership resolution, data integrity verification, and application registration, this document describes how reputation signals are created, validated, indexed, and consumed.
@@ -18,13 +16,9 @@ In contrast to most decentralized reputation systems, which focus on evaluating 
 
 # 2\. Scope
 
-## 
-
 ## 2.1 In-Scope
 
 This document defines the schemas, verification rules, reputation flows, and client requirements for producing and consuming service-level reputation within OMATrust. It is intended for implementers building applications, services, indexers, and validators in the broader OMATrust ecosystem. The scope includes normative definitions for attestations and the mechanisms required for clients to verify and index reputation signals associated with decentralized services.
-
-## 
 
 ## 2.2 Out-of-Scope
 
@@ -41,8 +35,6 @@ DID Specification: [https://www.w3.org/TR/did-core](https://www.w3.org/TR/did-co
 DID Spec Registries: [https://www.w3.org/TR/did-spec-registries/](https://www.w3.org/TR/did-spec-registries/)
 
 # 4\. Definitions
-
-## 
 
 ## 4.1 Abbreviations
 
@@ -66,8 +58,6 @@ The following applies to the specification:
 * “URL” means a string in a specific format  
 * “JSON” means a string in JSON format  
 * \[\] is meant to signify an array of whatever is inside the brackets.
-
-## 
 
 ## 4.2 Definitions
 
@@ -297,8 +287,6 @@ If these conditions are not met, a Handle-Link Statement evidence artifact MUST 
 
 ## 6.2 Key Binding
 
-### 
-
 ### 6.2.1 Key Binding Purpose
 
 A Key Binding Attestation declares that a particular cryptographic public key is authorized to act on behalf of a subject DID (e.g.- a service). This allows verifiers to confirm that signatures—whether used in Proofs, webhook signing, or automated agents—originate from a key legitimately controlled by the service.  Key Binding Attestations also provide a chain-agnostic, verifiable mechanism for key lifecycle management, including publication, rotation, expiration, and revocation.
@@ -520,8 +508,6 @@ A User Review attestation MUST conform to the structure defined in user-review.s
 
 ### 7.1.3 Proof Usage
 
-#### 
-
 A User Review MAY include zero or more Proofs. Proofs are optional and do not affect the structural validity of a review. When present, Proofs provide additional trust signals that clients MAY use to prioritize, score, or annotate reviews.
 
 User Reviews support two categories of evidence:
@@ -579,8 +565,7 @@ The Proof Parameter values MUST be:
 
 ### 7.1.4 Updates and Supersession
 
-#### 
-
+	  
 Attestations are immutable once created. To update a review, the attester MUST create a new User Review attestation for the same Subject. The new attestation supersedes any previous reviews from the same Attester for that Subject.
 
 Clients MUST implement supersession logic when displaying reviews:
@@ -589,8 +574,6 @@ Clients MUST implement supersession logic when displaying reviews:
 * Clients MAY provide UI to view superseded reviews as "review history" if desired.
 
 ### 7.1.5 Verification
-
-#### 
 
 A User Review attestation’s verification is a multi-step process that establishes its authenticity, data integrity, and the strength of the claim, which ultimately determines the Trust Level of the review.
 
@@ -633,11 +616,7 @@ A User Review Response attestation MUST conform to the normative JSON schema use
 
 ### 7.2.3 Updates and Supersession
 
-#### 
-
 Attestations are immutable once created. However, clients SHOULD NOT limit the number of attestations to evaluate for a given **`refUID`**.
-
-### 
 
 ### 7.2.4 Verification
 
@@ -729,39 +708,23 @@ If rules (1)–(3) pass, the endorsement is structurally valid and lifecycle-int
 
 ## 7.4 Certification Schema
 
-## 
-
 ### 7.4.1 Purpose
 
-## A Certification attestation records a formal decision by a Certification Body (CB) that a DID-identified **`subject`** has satisfied the requirements of a specific certification program.
+A Certification attestation records a formal decision by a Certification Body (CB) that a DID-identified **`subject`** has satisfied the requirements of a specific certification program.
 
-## 
+Certifications follow a three-party flow:
 
-## Certifications follow a three-party flow:
+1. An **`assessor`** (test lab, auditor, or other evaluation entity) evaluates the **`subject`** and produces assessment data.  
+2. The Certification Body receives that data and makes the certification decision.  
+3. If the decision is positive, the Certification Body issues this Certification attestation as the **`attester`**.
 
-## 
+Certifications are closely related to Endorsements but differ in two fundamental ways:
 
-1. ## An **`assessor`** (test lab, auditor, or other evaluation entity) evaluates the **`subject`** and produces assessment data.
+1. Assessor-mediated decision flow: An Endorsement is issued directly by an Attester to a Subject as a standalone trust signal. A Certification introduces an explicit intermediary: an Assessor evaluates the Subject and produces assessment results, and a Certification Body (Attester) then issues the certification decision based on that assessment. This Assessor role is part of the certification record and is required for interpreting how the decision was reached.
 
-2. ## The Certification Body receives that data and makes the certification decision.
+2. Program-formal and program-scoped:  Endorsements are intentionally lightweight and typically do not imply adherence to a defined process. Certifications, by contrast, are issued under formal certification programs with defined criteria, governance, and often their own persistent identity. Every Certification is therefore scoped to a specific program identified by programID (with optional descriptive context via programURI). The trust weight of a Certification depends on the client recognizing and trusting both the Certification Body and the program, in addition to the Assessor’s authorization within that program.
 
-3. ## If the decision is positive, the Certification Body issues this Certification attestation as the **`attester`**.
-
-## 
-
-## Certifications are closely related to Endorsements but differ in two fundamental ways:
-
-1. ## Assessor-mediated decision flow: An Endorsement is issued directly by an Attester to a Subject as a standalone trust signal. A Certification introduces an explicit intermediary: an Assessor evaluates the Subject and produces assessment results, and a Certification Body (Attester) then issues the certification decision based on that assessment. This Assessor role is part of the certification record and is required for interpreting how the decision was reached.
-
-2. ## Program-formal and program-scoped:  Endorsements are intentionally lightweight and typically do not imply adherence to a defined process. Certifications, by contrast, are issued under formal certification programs with defined criteria, governance, and often their own persistent identity. Every Certification is therefore scoped to a specific program identified by programID (with optional descriptive context via programURI). The trust weight of a Certification depends on the client recognizing and trusting both the Certification Body and the program, in addition to the Assessor’s authorization within that program.
-
-## 
-
-## The Certification schema does not embed assessor authorization lists. Instead, assessor authorization is determined externally through program governance referenced by **`programID/programURI`**, and/or through other reputation or support Attestations (e.g., Endorsements that designate authorized assessors for a program).
-
-## 
-
-## 
+The Certification schema does not embed assessor authorization lists. Instead, assessor authorization is determined externally through program governance referenced by **`programID/programURI`**, and/or through other reputation or support Attestations (e.g., Endorsements that designate authorized assessors for a program).
 
 ### 7.4.2 Certification Fields
 
@@ -791,99 +754,56 @@ A Certification attestation MUST conform to the normative JSON schema certificat
 | effectiveAt | No | integer |  |
 | expiresAt | No | integer |  |
 
-## 
-
 ### 7.4.3 Certification Verification
 
-## Because the Certification schema does not include Proof objects, verification is based on structural validity, lifecycle semantics, program scoping, **`assessor`** authorization, and trusted-attester evaluation.
+Because the Certification schema does not include Proof objects, verification is based on structural validity, lifecycle semantics, program scoping, **`assessor`** authorization, and trusted-attester evaluation.
 
-## 
+Clients verifying a Certification MUST apply the following rules:
 
-## Clients verifying a Certification MUST apply the following rules:
+1. The Certification attestation MUST include the required fields.  
+2. Lifecycle Semantics  
+   1. If **`effectiveAt`** is present and greater than the current time, the certification MUST be treated as not yet effective.  
+   2. If **`expiresAt`** is present and less than or equal to the current time, the certification MUST be treated as expired.  
+   3. **`issuedAt`**, **`effectiveAt`**, and **`expiresAt`**, if present, MUST be non-negative Unix timestamps (seconds).  
+3. Program Scoping  
+   1. The certification MUST be interpreted as valid only within the rules of the program identified by **`programId`**.  
+4. Assessor Authorization (Non-Proof)  
+   1. **`assessor`** is a claim that the named Assessor evaluated the **`subject`** in accordance with the program.  
+   2. Clients SHOULD verify that `assessor` is authorized by **`programID`** by one or more of:  
+      1. resolving program governance via **`programId`** or **`programURI`** (e.g., on-chain program registry or program-defined authorization rules), and/or  
+      2. locating Endorsements that designate the Assessor as authorized under the program.  
+   3. If Assessor authorization cannot be established, the certification MUST be treated as not verified for trust purposes, even if structurally valid.  
+5. Trusted-Attester Determination  
+   1. The meaning and weight of a Certification depend primarily on whether the client trusts the Certification Body (**`attester`**).  
+   2. Certifications MUST NOT be treated as trust-verified unless the Attester is recognized as a trusted CB.
 
-## 
-
-1. The Certification attestation MUST include the required fields.
-
-2. ## Lifecycle Semantics
-
-   1. ## If **`effectiveAt`** is present and greater than the current time, the certification MUST be treated as not yet effective.
-
-   2. ## If **`expiresAt`** is present and less than or equal to the current time, the certification MUST be treated as expired.
-
-   3. ## **`issuedAt`**, **`effectiveAt`**, and **`expiresAt`**, if present, MUST be non-negative Unix timestamps (seconds).
-
-3. ## Program Scoping
-
-   1. ## The certification MUST be interpreted as valid only within the rules of the program identified by **`programId`**.
-
-4. ## Assessor Authorization (Non-Proof)
-
-   1. ## **`assessor`** is a claim that the named Assessor evaluated the **`subject`** in accordance with the program.
-
-   2. ## Clients SHOULD verify that `assessor` is authorized by **`programID`** by one or more of:
-
-      1. ## resolving program governance via **`programId`** or **`programURI`** (e.g., on-chain program registry or program-defined authorization rules), and/or
-
-      2. ## locating Endorsements that designate the Assessor as authorized under the program.
-
-   3. ## If Assessor authorization cannot be established, the certification MUST be treated as not verified for trust purposes, even if structurally valid.
-
-5. ## Trusted-Attester Determination
-
-   1. ## The meaning and weight of a Certification depend primarily on whether the client trusts the Certification Body (**`attester`**).
-
-   2. ## Certifications MUST NOT be treated as trust-verified unless the Attester is recognized as a trusted CB.
-
-## 
-
-## If rules (1)–(3) pass, the Certification is structurally valid, lifecycle-interpretable, and program-scoped. Rules (4)–(5) govern whether the certification contributes to trust-verified reputation versus unverified reputation.
-
-## 
+If rules (1)–(3) pass, the Certification is structurally valid, lifecycle-interpretable, and program-scoped. Rules (4)–(5) govern whether the certification contributes to trust-verified reputation versus unverified reputation.
 
 ## 7.5 Security Assessment Schema
 
 ### 7.5.1 Purpose
 
-## A Security Assessment attestation records the results of a security evaluation performed by a DID-identified assessor over a DID-identified subject.
+A Security Assessment attestation records the results of a security evaluation performed by a DID-identified assessor over a DID-identified subject.
 
-## 
+The roles are:
 
-## The roles are:
+* **`attester`**: the security assessor or assessing organization issuing the attestation.  
+* **`subject`**: the product, system, or service being assessed.
 
-## 
+Security Assessments are designed as thin envelopes with most methodological detail, evidence, and results carried in **`payload`**. This keeps the core reputation layer stable while allowing different assessment methodologies and reporting styles to evolve through payload schemas.
 
-* ## **`attester`**: the security assessor or assessing organization issuing the attestation.
+The meaning and trust weight of a Security Assessment depend primarily on whether the client trusts the **`attester`**. Clients MAY ingest structurally valid assessments from untrusted Attesters but SHOULD treat them as unverified signals for scoring and filtering purposes.
 
-* ## **`subject`**: the product, system, or service being assessed.
+Each assessment explicitly declares its **`assessmentKind`** to support indexing and filtering without requiring clients to parse provider-specific payloads. Values for **`assessmentKind`** are registry-driven via **`x-oma3-enum`** rather than schema-frozen (See Section 9).
 
-## 
+Payload interpretation follows a default/override model:
 
-## Security Assessments are designed as thin envelopes with most methodological detail, evidence, and results carried in **`payload`**. This keeps the core reputation layer stable while allowing different assessment methodologies and reporting styles to evolve through payload schemas.
-
-## 
-
-## The meaning and trust weight of a Security Assessment depend primarily on whether the client trusts the **`attester`**. Clients MAY ingest structurally valid assessments from untrusted Attesters but SHOULD treat them as unverified signals for scoring and filtering purposes.
-
-## 
-
-## Each assessment explicitly declares its **`assessmentKind`** to support indexing and filtering without requiring clients to parse provider-specific payloads. Values for **`assessmentKind`** are registry-driven via **`x-oma3-enum`** rather than schema-frozen (See Section 9).
-
-## 
-
-## Payload interpretation follows a default/override model:
-
-## 
-
-* ## If **`payloadSpecURI`** is absent, the payload is interpreted using the default payload structure defined in this schema.
-
-* ## If **`payloadSpecURI`** is present, the payload is interpreted using the referenced payload specification, which MAY extend or override the default structure.
-
-## 
+* If **`payloadSpecURI`** is absent, the payload is interpreted using the default payload structure defined in this schema.  
+* If **`payloadSpecURI`** is present, the payload is interpreted using the referenced payload specification, which MAY extend or override the default structure.
 
 ### 7.5.2 Security Assessment Fields
 
-## A Security Assessment attestation MUST conform to the normative JSON schema security-assessment.schema.json in the OMA3 Github Repository.  The primary fields are:
+A Security Assessment attestation MUST conform to the normative JSON schema security-assessment.schema.json in the OMA3 Github Repository.  The primary fields are:
 
 | Field | Req | Format | Description |
 | ----- | ----- | ----- | ----- |
@@ -900,7 +820,7 @@ A Certification attestation MUST conform to the normative JSON schema certificat
 | payloadSpecURI | N | string |  |
 | payloadSpecDigest | N | string |  |
 
-## A Security Assessment attestation MUST conform to the normative JSON schema security-assessment.schema.json.  The primary fields are:
+A Security Assessment attestation MUST conform to the normative JSON schema security-assessment.schema.json.  The primary fields are:
 
 | Field | Req | Format | Description |
 | ----- | ----- | ----- | ----- |
@@ -930,77 +850,50 @@ If the metrics field is present it MUST have the following fields:
 | low | Yes | integer |  |
 | info | Yes | integer | Number of informational findings |
 
-### 7.5.3 Security Assessment Verification
+7.5.3 Security Assessment Verification
 
-## Because the Security Assessment schema does not include Proof objects, verification is based on structural validity, lifecycle semantics, payload interpretation, and trusted-attester evaluation.
+Because the Security Assessment schema does not include Proof objects, verification is based on structural validity, lifecycle semantics, payload interpretation, and trusted-attester evaluation.
 
-## 
+Clients and indexers verifying a Security Assessment MUST apply the following rules:
 
-## Clients and indexers verifying a Security Assessment MUST apply the following rules:
+1. Schema Validity  
+   1. The assessment MUST include the required fields.  
+   2. Required and optional fields MUST satisfy the type and format constraints of **`security-assessment.schema.json`**.  
+2. Lifecycle Semantics  
+   1. **`issuedAt`** MUST be a non-negative Unix timestamp (seconds).  
+   2. If **`effectiveAt`** is absent, clients MUST treat the assessment as effective at **`issuedAt`**.  
+   3. If **`effectiveAt`** is present, it MUST be a non-negative Unix timestamp (seconds).  
+3. Assessment Kind Handling  
+   1. **`assessmentKind`** MUST be present.  
+   2. Values not listed in **`x-oma3-enum`** are valid unless a client’s local policy rejects them.  
+4. Outcome Defaulting  
+   1. If outcome is absent, the assessment MUST be interpreted as a **`pass`**.  
+5. Payload Interpretation  
+   1. If **`payloadSpecURI`** is absent, the payload MUST be interpreted using the default payload structure defined in this schema.  
+   2. If **`payloadSpecURI`** is present, the payload MUST be interpreted using the referenced payload specification.  
+   3. Clients MAY treat **`payload`** as opaque and ignore them for trust/scoring purposes when the payload specification is missing, unrecognized, or fails local validation.  
+6. Report Integrity (Optional)  
+   1. If **`reportURI`** and **`reportDigest`** are present, clients SHOULD fetch the report and verify its digest using the declared algorithm and canonicalization rules.  
+   2. If digest verification fails, the report MUST be treated as invalid and ignored; the on-chain envelope remains the authoritative assessment record.  
+7. Trusted-Attester Determination  
+   1. The meaning and weight of a Security Assessment depend primarily on whether the client trusts the attester.  
+   2. Assessments MUST NOT be treated as trust-verified unless the attester is recognized as trusted under direct trust, delegated trust via Support Attestations, or local trusted-attester policy as described in §5.1 and §5.3.3.
 
-## 
+If rules (1)–(3) pass, the assessment is structurally valid and lifecycle-interpretable. Rules (4)–(7) govern how payload, evidence, and attester trust affect reputation scoring and filtering.
 
-1. ## Schema Validity
-
-   1. ## The assessment MUST include the required fields.
-
-   2. ## Required and optional fields MUST satisfy the type and format constraints of **`security-assessment.schema.json`**.
-
-2. ## Lifecycle Semantics
-
-   1. ## **`issuedAt`** MUST be a non-negative Unix timestamp (seconds).
-
-   2. ## If **`effectiveAt`** is absent, clients MUST treat the assessment as effective at **`issuedAt`**.
-
-   3. ## If **`effectiveAt`** is present, it MUST be a non-negative Unix timestamp (seconds).
-
-3. ## Assessment Kind Handling
-
-   1. ## **`assessmentKind`** MUST be present.
-
-   2. ## Values not listed in **`x-oma3-enum`** are valid unless a client’s local policy rejects them.
-
-4. ## Outcome Defaulting
-
-   1. ## If outcome is absent, the assessment MUST be interpreted as a **`pass`**.
-
-5. ## Payload Interpretation
-
-   1. ## If **`payloadSpecURI`** is absent, the payload MUST be interpreted using the default payload structure defined in this schema.
-
-   2. ## If **`payloadSpecURI`** is present, the payload MUST be interpreted using the referenced payload specification.
-
-   3. ## Clients MAY treat **`payload`** as opaque and ignore them for trust/scoring purposes when the payload specification is missing, unrecognized, or fails local validation.
-
-6. ## Report Integrity (Optional)
-
-   1. ## If **`reportURI`** and **`reportDigest`** are present, clients SHOULD fetch the report and verify its digest using the declared algorithm and canonicalization rules.
-
-   2. ## If digest verification fails, the report MUST be treated as invalid and ignored; the on-chain envelope remains the authoritative assessment record.
-
-7. ## Trusted-Attester Determination
-
-   1. ## The meaning and weight of a Security Assessment depend primarily on whether the client trusts the attester.
-
-   2. ## Assessments MUST NOT be treated as trust-verified unless the attester is recognized as trusted under direct trust, delegated trust via Support Attestations, or local trusted-attester policy as described in §5.1 and §5.3.3.
-
-## 
-
-## If rules (1)–(3) pass, the assessment is structurally valid and lifecycle-interpretable. Rules (4)–(7) govern how payload, evidence, and attester trust affect reputation scoring and filtering.
-
-# 8\. Utility Schemas
+8\. Utility Schemas
 
 This section defines reusable utility structures that appear across multiple attestation types. Utility schemas are not primary reputation attestations on their own; they provide shared field patterns and interpretation rules used by attestations in §§6–7.
 
 The utilities in this section are non-proof structures. Proof objects are also reusable utilities attached to attestations, not attestations on their own, but they are defined in the OMATrust Proof Specification. 
 
-## 8.1 Payload Container
+8.1 Payload Container
 
 Many OMATrust attestations include a **`payload`** field to carry attestation-specific details that are expected to evolve over time. Payloads are intentionally flexible to avoid frequent structural schema updates.
 
 **`payload`** is a JSON object whose internal fields are attestation specific. Unless a payload specification is referenced via **`payloadSpecURI`**, clients MUST treat payload contents as opaque data that MAY be ignored for trust/scoring purposes.
 
-### 8.1.1 Default and Custom Payloads
+8.1.1 Default and Custom Payloads
 
 Payload interpretation follows a default/override model:
 
@@ -1011,7 +904,7 @@ Clients MAY classify payloads that omit **`payloadSpecURI`** as “default-schem
 
 If the client cannot resolve or recognize a referenced spec, the client MUST still treat the attestation envelope as valid, but MAY ignore payload contents for trust/scoring purposes.
 
-### 8.1.2 Payload Metadata Fields
+8.1.2 Payload Metadata Fields
 
 Payload metadata fields describe the structure, versioning, and integrity of payloads. These fields are shared utilities referenced by multiple attestation schemas.  They are defined in the **`common.schema.json`** file.
 
@@ -1035,27 +928,27 @@ Verification:
 * If both **`payloadSpecURI`** and **`payloadSpecDigest`** are present, clients SHOULD fetch the spec and verify its digest.  
 * If digest verification fails, clients MUST treat the referenced spec as invalid and MAY fall back to default-schema interpretation or treat **`payload`** as opaque.
 
-# 9\. Schema Publication and Versioning
+9\. Schema Publication and Versioning
 
 This section defines where OMATrust normative JSON schemas are published, how schema versions are managed over time, how clients resolve schema UIDs to specific schema versions, and how to interpret OMA3-specific schema annotations (**`x-oma3-*`**). These rules ensure that attestations remain structurally stable and machine-validated across releases, while allowing the specification’s semantic guidance to evolve independently.
 
-## 9.1 Payload Container
+9.1 Payload Container
 
 Normative JSON schemas for all Support and Reputation attestations are published in the OMA3 schema repository on GitHub. Implementations MUST validate attestations against the schemas in that repository, as pinned by a tagged schema-set release.
 
-### 9.1.1 Tagged schema-set releases
+9.1.1 Tagged schema-set releases
 
 Schemas MUST be referenced by immutable tagged releases (e.g., **`schemas/vx.y.z/`**). Mutable branches (including main) are not normative unless explicitly bound to a tagged release. A tagged schema-set release represents the authoritative structural definitions for a specific OMATrust specification version.
 
-### 9.1.2 Spec ↔ schema-set mapping
+9.1.2 Spec ↔ schema-set mapping
 
 Each OMATrust specification version maps to exactly one schema-set tag. References in §§6–7 to “the normative schema” mean the schema file contained in the schema-set tag corresponding to this specification version.
 
-### 9.1.3 Immutability expectation
+9.1.3 Immutability expectation
 
 Structural changes to any schema require registering a new schema with the underlying attestation framework, producing a new schema UID. Because schema UID changes impose real client migration costs, schemas are expected to evolve infrequently compared to this specification text. Semantic or verification changes that do not alter structure SHOULD NOT require schema changes.
 
-### 9.1.4 Schema-set structure
+9.1.4 Schema-set structure
 
 Each schema-set release SHOULD be stored in a versioned folder (e.g., **`schemas/vx.y.z/`**) containing:
 
@@ -1063,11 +956,11 @@ Each schema-set release SHOULD be stored in a versioned folder (e.g., **`schemas
 * the pinned Common JSON Schema for that release, and  
 * a registry file as defined in §9.2.
 
-### 9.1.5 Backward compatibility
+9.1.5 Backward compatibility
 
 Clients MUST NOT assume a single active schema UID for a given attestation type. Clients SHOULD support the set of schema UIDs published in the registry for this spec version and MAY additionally support older UIDs according to local policy.
 
-## 9.2 Schema UID Registry
+9.2 Schema UID Registry
 
 Because attestations are often identified by schema UID, each schema-set release MUST publish a machine-readable registry file that maps schema UIDs to their structural definitions.
 
@@ -1086,7 +979,7 @@ Clients MUST rely on the registry to resolve a schema UID to a specific schema v
 
 Within a tagged schema-set release, the registry is immutable. Any change to a published registry requires a new schema-set version and tag.
 
-## 9.3 x-oma3 Schema Annotation Semantics
+9.3 x-oma3 Schema Annotation Semantics
 
 Schemas in the OMA3 repository may include OMATrust-specific JSON Schema extension fields prefixed with **`x-oma3-`**. These extensions are not part of normative structural validation; standard JSON Schema validators MUST ignore them.
 
@@ -1098,7 +991,7 @@ The purpose of **`x-oma3-*`** extensions is to allow OMATrust to improve UX and 
 
 without requiring a new schema UID.  Accordingly, unless a specific extension is referenced elsewhere in this specification, clients MAY treat **`x-oma3-*`** values as advisory metadata.
 
-### 9.3.1 x-oma3-default
+9.3.1 x-oma3-default
 
 Indicates that a field MAY be automatically populated with a default value by an implementation when omitted.  The value of **`x-oma3-default`** indicates what the default value should be:
 
@@ -1106,7 +999,7 @@ Indicates that a field MAY be automatically populated with a default value by an
 
 Auto-population MUST NOT override any explicit value provided by the Attester.
 
-### 9.3.2 x-oma3-did-methods
+9.3.2 x-oma3-did-methods
 
 An array of DID method strings that provide hints about which DID methods are recommended or expected for a DID-formatted field. Intended for UI guidance and method support signaling (a front end can provide a drop down of DID methods).  
 

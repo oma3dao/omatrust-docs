@@ -2,8 +2,6 @@
 
 ## Proof taxonomy of the OMATrust architecture
 
-# 
-
 # 1\. Executive Summary
 
 This OMATrust Proof Specification (“Specification”) defines the canonical proof framework used across the OMATrust ecosystem. It mainly standardizes how issuers of an attestation can convey trust in the attestation (for example that a user was a client of a service they are reviewing).  However, it is also used in other parts of OMATrust such as proving ownership in the Identity Registry. It is referenced by the [OMATrust Identity Specification](https://github.com/oma3dao/omatrust-docs/blob/main/specification/omatrust-specification.md) (“Identity Specification”) as well as the OMATrust Reputation Specification (“Reputation Specification”).
@@ -15,8 +13,6 @@ The Specification defines a taxonomy of evidence that is dictated by identifier 
 The Specification also defines Proof Purposes and their relationship to risk tiers and anti-spam economics. A Proof Purpose declares why the Proof exists (e.g., shared control of an identity vs. a commercial interaction). Certain mechanisms create Proofs differently depending on the Proof Purpose.
 
 # 2\. Scope
-
-## 
 
 ## 2.1 In-Scope
 
@@ -35,8 +31,6 @@ This specification does not define:
 
 These are handled by other OMATrust specification documents or are out of scope of OMATrust.
 
-# 
-
 # 3\. References
 
 OMATrust Whitepaper: [https://github.com/oma3dao/omatrust-docs/blob/main/whitepaper.md](https://github.com/oma3dao/omatrust-docs/blob/main/whitepaper.md)   
@@ -48,8 +42,6 @@ JCS Canonicalization Scheme:  [https://datatracker.ietf.org/doc/rfc8785/](https:
 CAIP-2 Standard:  [https://chainagnostic.org/CAIPs/caip-2](https://chainagnostic.org/CAIPs/caip-2) 
 
 # 4\. Definitions
-
-## 
 
 ## 4.1 Abbreviations
 
@@ -70,8 +62,6 @@ The following applies to the specification:
 * “string” means a UTF-8 string  
 * “object” means a string in JSON format  
 * \[\] is meant to signify an array of whatever is inside the brackets.
-
-## 
 
 ## 4.2 Definitions
 
@@ -329,6 +319,8 @@ Conceptually, EIP-712 Proof Objects parallel JWS Proof Objects as follows:
 * The EIP-712 **`message`** contains the signed payload data, analogous to a JWS **`payload`**.  
 * The EIP-712 **`signature`** provides cryptographic integrity, analogous to a JWS **`signature`**.
 
+In x402 protocol messages, EIP-712–signed artifacts are transmitted as an object containing **`{ format, payload, signature }`**, where **`payload`** is the EIP-712 **`message`** values and **`signature`** is the hex-encoded signature. When constructing an OMATrust Proof Object for **`proofFormat = eip712`**, implementations MUST map **`payload`** to the EIP-712 **`message`** field, copy the hex **`signature`** verbatim, and supply the canonical EIP-712 **`domain`** defined for this Proof Type in this specification.
+
 While the EIP-712 schema (**`types`** and **`primaryType`**) does not appear on the wire, it is implicitly included in the **`signature`** through the EIP-712 hashing rules. As a result, any change to a canonical EIP-712 schema constitutes a breaking change and MUST be accompanied by explicit versioning.
 
 Section numbers are non-normative and may change. Implementations and referencing specifications MUST rely on the proofType identifier rather than section numbering.
@@ -485,15 +477,9 @@ This Proof Type directly embeds the Service Receipt defined in the [x402 Protoco
 | proofObject | Y | Native receipt object as defined by the selected proofFormat |
 | proofFormat | Y | String:  **`jws`** or **`eip712`** |
 
-##### 
-
 ##### When **`proofFormat = jws`**, **`proofObject`** MUST be a JWS Compact Serialization whose payload is the receipt fields in §5.3.4.2, canonicalized with JCS. See §5.3.4.3.”
 
-##### 
-
-##### When **`proofFormat = eip712`**, **`proofObject`** MUST be the EIP-712 bundle defined in §5.3.4.4.
-
-##### 
+When **`proofFormat = eip712`**, **`proofObject`** MUST be the EIP-712 bundle defined in §5.3.4.4.
 
 #### 5.3.4.2 Receipt Payload Fields
 
@@ -796,8 +782,6 @@ The **`proofObject`** for **`tx-interaction`** MUST be a JSON object with the fo
 | chainId | Y | string | CAIP-2 chain identifier |
 | txHash | Y | string | Transaction identifier on the specified chain |
 
-#### 
-
 #### 5.3.7.2 Verification Logic
 
 A verifier validating an **`tx-interaction`** proof MUST perform all of the following steps:
@@ -830,8 +814,6 @@ The OMATrust proof wrapper MUST contain the following fields:
 | proofObject | Y | Native offer object as defined by the selected **`proofFormat`** |
 | proofFormat | Y | String:  **`jws`** or **`eip712`** |
 
-##### 
-
 #### 5.3.8.2 Offer Payload Fields
 
 The signed offer payload is protocol-agnostic and applies equally to x402 v1 and v2. The payload MUST be a flat JSON object containing the following fields.
@@ -848,16 +830,12 @@ Required fields:
 | payTo | string | Destination address for payment |
 | amount | string | Amount required for the offer (canonicalized across protocol versions) |
 
-##### 
-
 Optional Fields:
 
 | Field | Type | Format/Value |
 | ----- | ----- | ----- |
 | maxTimeoutSeconds | int | Maximum allowed time for completing payment |
 | issuedAt | int | Unix timestamp (seconds) when the offer was issued |
-
-##### 
 
 No payer identifier, transaction reference, or settlement proof data MUST be included in the signed offer payload.
 

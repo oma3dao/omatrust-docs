@@ -2,8 +2,6 @@
 
 ## Decentralized and Permissionless Trust Layer for the Open Internet 
 
-# 
-
 # 1\. Executive Summary
 
 This document (“Specification”) defines the requirements for the Identity Registry of OMATrust, a decentralized and permissionless trust layer for the open internet. It has two main components: 
@@ -86,8 +84,6 @@ In addition to the above definitions all OMA3 specifications use requirements la
 
 ## 5.1 App Registry Contract
 
-### 
-
 ### 5.1.1 Onchain Metadata
 
 The Application Registry contract tokenizes applications on the blockchain as an NFT.  This document describes the specifications for this contract in a platform-agnostic manner.  
@@ -125,8 +121,6 @@ The objects in the **`versionHistory`** array have the following fields:
 | minor | Int | Y |
 | patch | Int | Y |
 
-#### 
-
 #### 5.1.1.2 JSON Format: **`dataUrl`**
 
 **`dataUrl`** points to an endpoint that returns a JSON object with offchain data.  The JSON object has the following top level fields depending on the value of the **`interfaces`** field in the NFT contract:
@@ -159,8 +153,6 @@ Table 2: Application offchain data.
 
 ### 5.1.2 Offchain Metadata
 
-#### 
-
 #### 5.1.2.1 JSON Format: **`dataUrl.platforms`**
 
 If **`interfaces`** \= 0, The **`platforms`** JSON object MUST contain one or more of the following fields depending on how the human user interacts with the app:
@@ -186,8 +178,6 @@ A **`platform`** field is a JSON object that has the following fields:
 | downloadUrl | string | URL to download a binary | O |
 | artifactDid | string | See Appendix A | O |
 
-#### 
-
 #### 5.1.2.2 JSON Format: **`dataUrl.endpoints`**
 
 The **`endpoints`** field contains an array JSON objects, each of which contains the following fields:
@@ -201,8 +191,6 @@ The **`endpoints`** field contains an array JSON objects, each of which contains
 For **`interface`** \= 4 (contracts), the chain ID is taken from the DID (did:pkh with CAIP-10 ID). Clients can then determine the format the RPC endpoint requires based on the chain ID. 
 
 There are additional option fields in endpoints depending on the type of 
-
-#### 
 
 #### 5.1.2.3 Endpoint Type MCP
 
@@ -218,8 +206,6 @@ The following are the additional JSON fields for an **`endpoints`** object:
 | transport | JSON | See below | Y |
 | authentication | JSON | See below | Y |
 
-##### 
-
 ##### 5.1.2.3.1 MCP JSON Format: **`dataUrl.endpoints[0].tools`**
 
 The **`tools`** array contains JSON objects with the following fields:
@@ -230,8 +216,6 @@ The **`tools`** array contains JSON objects with the following fields:
 | description | string |  | Y |
 | inputSchema | JSON |  | Y |
 | annotations | JSON |  | N |
-
-##### 
 
 ##### 5.1.2.3.2 MCP JSON Format: **`dataUrl.endpoints[0].resources`**
 
@@ -244,8 +228,6 @@ The **`resources`** array contains JSON objects with the following fields:
 | description | string |  | N |
 | mimeType | string |  | N |
 
-##### 
-
 ##### 5.1.2.3.3 MCP JSON Format: **`dataUrl.endpoints[0].prompts`**
 
 The **`prompts`** array contains JSON objects with the following fields:
@@ -256,8 +238,6 @@ The **`prompts`** array contains JSON objects with the following fields:
 | description | string |  | Y |
 | arguments | \[JSON\] |  | N |
 
-##### 
-
 ##### 5.1.2.3.4 MCP JSON Format: **`dataUrl.endpoints[0].transport`**
 
 The **`transport`** JSON object contains the following fields:
@@ -267,8 +247,6 @@ The **`transport`** JSON object contains the following fields:
 | http | JSON |  | N |
 | stdio | JSON |  | N |
 
-##### 
-
 ##### 5.1.2.3.5 MCP JSON Format: **`dataUrl.endpoints[0].authentication`**
 
 The **`authentication`** JSON object contains the following fields:
@@ -277,8 +255,6 @@ The **`authentication`** JSON object contains the following fields:
 | ----- | ----- | ----- | ----- |
 | oauth2 | JSON |  | N |
 | blockchain | JSON |  | N |
-
-#### 
 
 #### 5.1.2.4 JSON Format: **`dataUrl.artifacts`**
 
@@ -345,11 +321,7 @@ JSON example for the **`artifacts`** field:
 }
 ```
 
-### 
-
 ### 5.1.3 Metadata Confirmation
-
-#### 
 
 OMATrust uses several mechanisms to confirm the validity of data stored in app tokens. Some of these mechanisms are performed by the registry itself, and other mechanisms are performed by the client.
 
@@ -414,7 +386,7 @@ Multiple **`controller`** values indicate co-controllers. For rotation, both old
 
 ##### 5.1.3.1.2 **`did:pkh`** Confirmation
 
-This DID method is used to tokenize a smart contract application. Smart contracts do not need to be tokenized in order for users to file attestations on them. Attestations can be filed directly with an attestation service using the DID → Index Address Mapping method (Section 5.3.2). Tokenizing a smart contract is primarily for discovery and usage information. 
+This DID method is used to tokenize a smart contract application. Smart contracts do not need to be tokenized in order for users to file attestations on them. Attestations can be filed directly with an attestation service using the DID → DID Address Mapping method (Section 5.3.2). Tokenizing a smart contract is primarily for discovery and usage information. 
 
 If a smart contract is tokenized, the Issuer MUST confirm that the address minting the smart contract token is controlled by the same entity that either administered or deployed the contract.  For EVM contracts:
 
@@ -468,8 +440,6 @@ Once the proof has been given, the issuer MUST make an attestation binding the m
 
 These CAIP-10 fields SHOULD be confirmed by the client using the same mechanisms the Issuer follows when confirming a did:pkh DID as described in Section 5.1.3.1.2.
 
-#### 
-
 #### 5.1.3.3 **`dataURL`** Confirmation
 
 ##### 5.1.3.3.1 **`dataHash`** Check
@@ -503,8 +473,6 @@ For URLs that point to media:
 * Clients SHOULD place higher trust in content addressable URLs such as IPFS or Filecoin URLs, as the content in these URLs cannot be changed without changing the URL.
 
 * If the URL returns a media file, the media file MAY have the owner address embedded in the file in some manner.
-
-### 
 
 #### 5.1.3.4 JSON Policies
 
@@ -553,16 +521,12 @@ The following table details versioning rules for certain onchain fields.
 
 Table 3:  Allowed DID methods for Application Registry DID field.
 
-#### 
-
 #### Control Policy Justification
 
 * Apple’s App Store ties immutability to the Bundle ID, forbidding any Bundle ID change once an app is live, so users always know they’re running the same canonical app. Google Play enforces the same rule on the Android Package Name, requiring publishers to create an entirely new listing if they change it.   
 * Swapping the fungibleTokenId on-chain is equivalent to issuing an infinite‑mint ERC‑20 rug pull, so we freeze that field and demand a new DID/NFT to alter it.    
 * Because CAIP‑19 encodes the contract address in the asset ID, any breaking executable change must mint a new NFT keyed by (did,major) to maintain deterministic asset lookups.   
 * Non‑breaking API additions only require a minor bump in version number, signaling backward compatibility, while metadata or binary tweaks controlled by dataHash require only a patch bump. 
-
-### 
 
 ### 5.1.5 Optional Soulbound Mode
 
@@ -575,8 +539,6 @@ UI guidance: Stores SHOULD visually label soulbound apps.
 ## 5.2 Ownership Resolver Contract
 
 DID ownership is verified at token minting time. OMA3 uses a dedicated Resolver contract to confirm ownership and arbitrate conflicts when multiple parties claim to own the same DID.
-
-### 
 
 ### **Process**
 
@@ -611,57 +573,40 @@ This model ensures predictable resolution without upgradeable registries, while 
 
 A permissionless app registry without third party attestations leaves users open to fraud.  Adversaries can register malicious, fraudulent, misleading, and counterfeit apps.  To address this problem OMATrust leverages the Reputation System.
 
-### 
-
 ### 5.3.1 OMATrust Reputation System
 
 The OMATrust Reputation System leverages and augments existing services like Ethereum Attestation Service.  It is comprised of the following components:
 
 1. Attestation Schemas:  OMA3 defines several schemas for different attestations, from user reviews to cybersecurity certifications.  These are defined in the OMATrust Reputation Specification (§6–7).  
      
-2. Cross Chain Addresses:  Instead of using chain-specific blockchain addresses to identify the attestation subject, OMATrust uses hashed DIDs in the same format as addresses (see DID → Index Address Mapping Section 5.3.2), which support web domains as well as blockchain addresses.  
+2. Cross Chain Addresses:  Instead of using chain-specific blockchain addresses to identify the attestation subject, OMATrust uses hashed DIDs in the same format as addresses (see DID → DID Address Mapping Section 5.3.2), which support web domains as well as blockchain addresses.  
      
 3. Resolver:  the Resolver contract stores onchain attestations related to ownership, as described above.
 
-### 5.3.2 DID → Index Address Mapping and Searching
+### 5.3.2 DID → DID Address Mapping and Searching
 
-To enable efficient per-DID discovery in contexts where a Solidity address is used as an index key (including the **`recipient`** field in EAS), OMATrust defines a deterministic mapping from a DID to an Index Address.
+Ethereum Attestation Service (EAS) identifies the subject of an attestation using an address-typed recipient field. Because DIDs are variable-length strings, OMATrust defines a deterministic mapping from a DID to an Ethereum address, called an DID Address, solely for use with EAS.
 
-Computing the Index Address:
+This address is an indexing label only. It is not an identity, does not imply control or ownership, and MUST NOT be interpreted as a wallet or transaction destination.
 
-For any **`did`**, the corresponding Index Address is derived as follows:
+Computing the DID Address:
 
-```
-library DidIndex {
-    /// @notice Compute the DID Index Address used for EAS recipient or other address-keyed indexes.
-    /// @dev didHash = keccak256(canonicalizeDID(did))
-    function toAddress(bytes32 didHash) internal pure returns (address) {
-        // Domain-separated, versioned prefix for portability and clarity.
-        bytes32 h = keccak256(abi.encodePacked("DID:Solidity:Address:v1:", didHash));
-        return address(uint160(uint256(h)));
-    }
-}
-```
+For any **`did`**, the corresponding EAS recipient address is derived as follows:
 
-Where:
-
-* **`canonicalizeDID(did)`** applies normalization rules defined by the DID method. For example:  
-  * **did:web**: lowercase the host, apply IDNA/punycode for international domains, preserve the path.  
-  * **did:pkh**: use the canonical chain/account encoding.  
-* **`didHash`** is the keccak256 digest of the canonicalized DID string.
-
-Design Rationale:
-
-* **Domain separation & versioning:** The ASCII prefix **`DID:Solidity:Address:v1:`** ensures compatibility and clear separation from other schemes. Future revisions can use updated prefixes (e.g., **`…:v2:`**).  
-* **Portability:** The Index Address can be used anywhere an **`address`** index is expected—EAS recipients, event partition keys, or contract mappings.  
-* **Semantics:** The Index Address is a label for indexing only. It is not a wallet and does not imply control or ownership.  
-* **Collision risk:** Negligible (≈ 1 / 2¹⁶⁰). The prefix further reduces overlap with unrelated mappings.
-
-### 
+1. Canonicalize the DID:    
+   1. Apply normalization rules defined by the DID method.  
+   2. Examples:  
+      1. **`did:web`**: lowercase the host, apply IDNA/punycode for international domains, preserve the path.  
+      2. **`did:pkh`**: use the canonical CAIP-10 chain/account encoding.  
+2. Compute the **`didHash`**  
+   1. The **`didHash`** is the keccak256 digest of the canonicalized DID string  
+   2. This produces a bytes32-equivalent hex string  
+3. Truncate to an Ethereum address  
+   1. The DID Address is the low-order 160 bits of **`didHash`**
 
 ### 5.3.3 Attestation Querying
 
-Clients can retrieve attestations related to a DID by computing its Index Address and filtering attestations accordingly.
+Clients can retrieve attestations related to a DID by computing its DID Address and filtering attestations accordingly.
 
 Example query flow:
 
@@ -669,14 +614,12 @@ Example query flow:
 2. Query EAS for attestations with **`recipient = indexAddress(did)`** and a given schema UID (e.g., **`Oma3UserReview@1`**).  
 3. Within each attestation payload, confirm that **`subjectDidHash`** matches the DID hash used to derive the recipient. This prevents mismatches or spoofing.
 
-### 
-
 ### 5.3.4 EAS Integration: Recipient Rule
 
 When storing an attestation about a DID in EAS:
 
 * The **`recipient`** field MUST equal the computed **`indexAddress(did)`*****.*  
-* The attestation payload MUST include **`subjectDidHash`**, which is exactly the **`didHash`** derived during Index Address computation (see Section 5.1.3.4.3) 
+* The attestation payload MUST include **`subjectDidHash`**, which is exactly the **`didHash`** derived during DID Address computation (see Section 5.1.3.4.3) 
 
 Example Schema: **`Oma3UserReview@1`**
 
@@ -705,9 +648,7 @@ address recipient = indexAddress(did);
 
 Then decode the attestation payloads and resolve **`contentHash`** for off-chain content when needed.
 
-Clients can retrieve attestations related to a DID by computing its Index Address and filtering attestations accordingly.
-
-### 
+Clients can retrieve attestations related to a DID by computing its DID Address and filtering attestations accordingly.
 
 ### 5.3.5 Reputation Specification (External Reference)
 
@@ -726,8 +667,6 @@ The OMA3 Reputation Specification defines:
 Separating reputation semantics from the OMATrust core ensures that the identity and integrity layer remains stable and slow-moving, while the reputation layer can evolve independently and incorporate new attestation types, protocol extensions, and ecosystem practices over time.
 
 Specifications on the below schemas can be found in the [OMA3 Reputation Service draft proposal](https://docs.google.com/document/d/11NQgwzXkXMGXy07NIDcMovPjKQT4W3CiHWdNZ2TpbQ0/).
-
-### 
 
 ### 5.3.6 Client Guidance
 
@@ -772,6 +711,7 @@ This approach balances decentralized publishing with user trust, enabling permis
 | 0.4 | 2025-10-11 | Removed 5.1.6, dataUrl.endpoint.format, dataUrl.a2a, and payments |
 | 0.5 | 2025-10-30 | Appendix C, \_omatrust clarification, more did:pkh ownership confirmation methods, ERC-8004 compatibility. |
 | 0.6 | 2025-12-10 | Added dataUrl.registrations and version, clarified default hash algorithms and that summary is optional, refinements to artifacts, require new NFT mint on dataUrl change. |
+| 0.7 | 2026-01-10 | Simplified computation of DID Index Address and renamed to DID Address. |
 
 # Appendix A
 
@@ -866,17 +806,17 @@ When a record references an **`artifactDid`**, verifiers MUST:
 * **Dynamic content:** SRI manifests cover only listed assets; non-listed dynamic responses are **out of scope** and should be treated as unverified.  
 * **Determinism:** prefer deterministic packaging to avoid unintentional hash churn.  
 * **Keyed proofs:** signatures/SBOM/provenance strengthen trust but do not replace byte-level verification against **`artifactDid`**.  
-* **DID Index Address semantics**: \`indexAddress(did)\` (see §{\#did-index-address}) is a deterministic \*\*indexing label\*\* for discovery and partitioning, not proof of control. Do \*\*not\*\* interpret it as a signer/owner; never send assets to it. The chance a real EOA equals this address is negligible (≈ 1 / 2^160), and the versioned prefix prevents cross-scheme overlap.
+* **DID Address semantics**: \`indexAddress(did)\` (see §{\#did-index-address}) is a deterministic \*\*indexing label\*\* for discovery and partitioning, not proof of control. Do \*\*not\*\* interpret it as a signer/owner; never send assets to it. The chance a real EOA equals this address is negligible (≈ 1 / 2^160), and the versioned prefix prevents cross-scheme overlap.
 
 ## 
 
-## **A.8 DID Index Address Helper**
+## **A.8 DID Address Helper**
 
-Reference Solidity helper for computing the Index Address from a \`didHash\`:
+Reference Solidity helper for computing the DID Address from a \`didHash\`:
 
 ```
 library DidIndex {
-    /// @notice Compute the DID Index Address used for EAS recipient or other address-keyed indexes.
+    /// @notice Compute the DID Address used for EAS recipient or other address-keyed indexes.
     /// @dev didHash = keccak256(canonicalizeDID(did))
     function toAddress(bytes32 didHash) internal pure returns (address) {
         // Domain-separated, versioned prefix for portability and clarity.
