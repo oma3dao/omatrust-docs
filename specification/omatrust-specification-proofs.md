@@ -464,95 +464,29 @@ Canonical EIP-712 Types (**`pop-eip712`**)
 
 ### 5.3.4 x402 Receipt Proof (**`x402-receipt`**)
 
-The **`x402-receipt`** Proof Type provides cryptographic evidence that a client both paid for a service and received delivery from an x402-protected resource. It is the canonical high-confidence commercial interaction proof for User Reviews and other commercial interaction attestations when the reviewed service implements the x402 Service Receipt Extension.
+The **`x402-receipt`** Proof Type provides cryptographic evidence that a service acknowledged payment and attested to successful delivery to a client. It is the canonical high-confidence commercial interaction proof for User Reviews and other commercial interaction attestations when the reviewed service implements the x402 Signed Offer and Service Receipt Extension.
 
 #### 5.3.4.1 **`x402-receipt`** Format
 
-This Proof Type directly embeds the Service Receipt defined in the [x402 Protocol Specification – Offer and Receipt Extension](https://github.com/oma3dao/x402/blob/spec/settlement-txid/specs/x402-specification-receipt.md).  The receipt supports two signature formats: JWS (for web-native signing) and EIP-712 (for EVM wallet signing). This Proof wrapper MUST contain the following fields:
+This Proof Type directly embeds the Service Receipt defined in the [x402 Signed Offer and Service Receipt Extension](https://github.com/oma3dao/x402/blob/spec/settlement-txid/specs/x402-specification-receipt.md).  The receipt supports two signature formats: JWS (for web-native signing) and EIP-712 (for EVM wallet signing). This Proof wrapper MUST contain the following fields:
 
 | Field | Req | Format/Value |
 | ----- | ----- | ----- |
 | proofType | Y | String that MUST be **`x402-receipt`** |
 | proofPurpose | Y | String that MUST be **`commercial-tx`** |
 | proofObject | Y | Native receipt object as defined by the selected proofFormat |
-| proofFormat | Y | String:  **`jws`** or **`eip712`** |
 
-##### When **`proofFormat = jws`**, **`proofObject`** MUST be a JWS Compact Serialization whose payload is the receipt fields in §5.3.4.2, canonicalized with JCS. See §5.3.4.3.”
+#### 5.3.4.2 Receipt **`proofObject`**
 
-When **`proofFormat = eip712`**, **`proofObject`** MUST be the EIP-712 bundle defined in §5.3.4.4.
-
-#### 5.3.4.2 Receipt Payload Fields
-
-The following fields MUST be included in the receipt, regardless of signature format:
-
-| Field | Req | Type | Format/Value |
-| ----- | ----- | ----- | ----- |
-| resourceUrl | Y | string | Resource URI from the payment requirements |
-| payer | Y | string | Payer address (the client identifier visible to the service) |
-| issuedAt | Y | int | Unix timestamp (seconds) when receipt was issued |
-
-#### 5.3.4.3 JWS Format (**`proofFormat = jws`**)
-
-When proofFormat is **`jws`**, **`proofObject`** MUST be a JWS Compact Serialization string:
-
-```
-<base64url(header)>.<base64url(payload)>.<base64url(signature)>
-```
-
-| Field | Req | Type | Format/Value |
-| ----- | ----- | ----- | ----- |
-| alg | Y | string | Signing algorithm (e.g., **`ES256K`**, **`EdDSA`**) |
-| kid | Y | string | Key identifier (DID) for key lookup |
-
-The JWS **`payload`** MUST be a JSON object containing the fields defined in §5.3.4.2, canonicalized using JCS (RFC 8785).
-
-#### 5.3.4.4 EIP-712 Format (**`proofFormat = eip712`**)
-
-When **`proofFormat`** is **`eip712`**, **`proofObject`** MUST be a JSON object with the following structure:
-
-| Field | Req | Type | Format/Value |
-| ----- | ----- | ----- | ----- |
-| domain | Y | object | EIP-712 domain separator (see below) |
-| message | Y | object | The receipt payload fields from §5.3.4.2 |
-| signature | Y | string | Hex-encoded ECDSA signature (0x-prefixed, 65 bytes: r \+ s \+ v) |
-
-The EIP-712 domain separator MUST be:
+**`proofObject`** is the receipt object returned in the **`extensions`** field of an x402 Settlement Response message.
 
 ```json
-{
-  name: "x402 receipt",
-  version: "1",
-  chainId: <chainId from network>
-}
+extensions["offer-receipt"].info.receipt
 ```
 
-The **`message`** object MUST contain exactly the receipt payload fields defined in §5.3.4.2, and no others.
+#### 5.3.4.3 Verification Logic
 
-EIP-712 Types MUST be:
-
-```json
-{
-  "primaryType": "Receipt",
-  "types": {
-    "EIP712Domain": [
-      { "name": "name", "type": "string" },
-      { "name": "version", "type": "string" },
-      { "name": "chainId", "type": "uint256" }
-    ],
-    "Receipt": [
-      { "name": "resourceUrl", "type": "string" },
-      { "name": "payer", "type": "string" },
-      { "name": "issuedAt", "type": "uint256" }
-    ]
-  }
-}
-```
-
-For EIP-712 receipts, the signer address is recovered from the signature. Verifiers MUST resolve the recovered address to a service identity via Key Binding attestation lookup.
-
-#### 5.3.4.5 Verification Logic
-
-Verifiers MUST validate the contained receipt according to the x402 Receipt Extension specification referenced above. This includes signature verification, issuer authorization, and confirmation of successful service delivery.
+Verifiers MUST validate the contained receipt according to the x402 Signed Offer and Service Receipt Extension specification referenced above. This includes signature verification, issuer authorization, and validation that the receipt semantically asserts successful service delivery according to the x402 Signed Offer and Service Receipt Extension specification.
 
 OMATrust does not redefine x402 receipt verification semantics.
 
@@ -812,113 +746,18 @@ The OMATrust proof wrapper MUST contain the following fields:
 | proofType | Y | String that MUST be **`x402-offer`** |
 | proofPurpose | Y | String that MUST be **`commercial-tx`** |
 | proofObject | Y | Native offer object as defined by the selected **`proofFormat`** |
-| proofFormat | Y | String:  **`jws`** or **`eip712`** |
 
-#### 5.3.8.2 Offer Payload Fields
+Note that proofFormat is not needed because it is contained in the proofObject in accordance with the x402 Signed Offer and Service Receipt Extension.
 
-The signed offer payload is protocol-agnostic and applies equally to x402 v1 and v2. The payload MUST be a flat JSON object containing the following fields.
+#### 5.3.8.2 Offer **`proofObject`**
 
-Required fields:
-
-| Field | Type | Format/Value |
-| ----- | ----- | ----- |
-| resourceUrl | string | Resource URL to which the offer applies |
-| scheme | string | x402 scheme identifier |
-| settlement | string | Settlement mechanism identifier |
-| network | string | Network identifier (e.g., CAIP-2) |
-| asset | string | Asset identifier |
-| payTo | string | Destination address for payment |
-| amount | string | Amount required for the offer (canonicalized across protocol versions) |
-
-Optional Fields:
-
-| Field | Type | Format/Value |
-| ----- | ----- | ----- |
-| maxTimeoutSeconds | int | Maximum allowed time for completing payment |
-| issuedAt | int | Unix timestamp (seconds) when the offer was issued |
-
-No payer identifier, transaction reference, or settlement proof data MUST be included in the signed offer payload.
-
-#### 5.3.8.3 JWS Format (**`proofFormat = jws`**)
-
-When proofFormat is **`jws`**, **`proofObject`** MUST be a JWS Compact Serialization string:
-
-```
-<base64url(header)>.<base64url(payload)>.<base64url(signature)>
-```
-
-| Field | Req | Type | Format/Value |
-| ----- | ----- | ----- | ----- |
-| alg | Y | string | Signing algorithm (e.g., **`ES256K`**, **`EdDSA`**) |
-| kid | Y | string | Key identifier (DID) for key lookup |
-
-The JWS **`payload`** MUST be a JSON object containing the fields defined in §5.3.8.2, canonicalized using JCS (RFC 8785).
-
-#### 5.3.8.4 EIP-712 Format (**`proofFormat = eip712`**)
-
-When **`proofFormat`** is **`eip712`**, **`proofObject`** MUST be a JSON object with the following structure:
-
-| Field | Req | Type | Format/Value |
-| ----- | ----- | ----- | ----- |
-| domain | Y | object | EIP-712 domain separator (see below) |
-| message | Y | object | The offer payload fields from §5.3.8.2 |
-| signature | Y | string | Hex-encoded ECDSA signature (0x-prefixed, 65 bytes: r \+ s \+ v) |
-
-The EIP-712 domain separator MUST be:
+**`proofObject`** is a signed offer object returned in the extensions field of an x402 Payment Requirements (402) response message.
 
 ```json
-{
-  name: "x402 offer",
-  version: "1",
-  chainId: <chainId from network>
-}
+extensions["offer-receipt"].info.offers[*]
 ```
 
-**`message`** example:
-
-```json
-{
-  "resourceUrl": "https://api.example.com/weather",
-  "scheme": "x402",
-  "settlement": "txid",
-  "network": "eip155:1",
-  "asset": "ETH",
-  "payTo": "0xabc...",
-  "amount": "1000000000000000",
-  "maxTimeoutSeconds": 10,
-  "issuedAt": 1730000000
-}
-```
-
-EIP-712 Types MUST be:
-
-```json
-{
-  "primaryType": "SignedOffer",
-  "types": {
-    "EIP712Domain": [
-      { "name": "name", "type": "string" },
-      { "name": "version", "type": "string" },
-      { "name": "chainId", "type": "uint256" }
-    ],
-    "SignedOffer": [
-      { "name": "resourceUrl", "type": "string" },
-      { "name": "scheme", "type": "string" },
-      { "name": "settlement", "type": "string" },
-      { "name": "network", "type": "string" },
-      { "name": "asset", "type": "string" },
-      { "name": "payTo", "type": "string" },
-      { "name": "amount", "type": "string" },
-      { "name": "maxTimeoutSeconds", "type": "uint256" },
-      { "name": "issuedAt", "type": "uint256" }
-    ]
-  }
-}
-```
-
-For EIP-712 offers, the signer address is recovered from the signature.
-
-#### 5.3.8.5 Verification Logic
+#### 5.3.8.3 Verification Logic
 
 Verifiers MUST validate the contained offer according to the x402 Signed Offers and Service Receipts Extension specification referenced above. This includes signature verification, issuer authorization, and confirmation that the signed offer payload matches the advertised x402 payment requirements.
 
@@ -930,6 +769,7 @@ OMATrust does not redefine x402 offer verification semantics.
 | ----- | ----- | :---- |
 | 0.1 | 2025-11-30 | Initial draft \- Alfred Tom |
 | 0.2 | 2025-12-22 | New extension-offer-and-receipt.md spec |
+| 0.21 | 2026-01-22 | x402 Signed Offer and Service Receipt Extension clarifications |
 
 # Appendix A
 

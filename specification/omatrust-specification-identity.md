@@ -712,6 +712,7 @@ This approach balances decentralized publishing with user trust, enabling permis
 | 0.5 | 2025-10-30 | Appendix C, \_omatrust clarification, more did:pkh ownership confirmation methods, ERC-8004 compatibility. |
 | 0.6 | 2025-12-10 | Added dataUrl.registrations and version, clarified default hash algorithms and that summary is optional, refinements to artifacts, require new NFT mint on dataUrl change. |
 | 0.7 | 2026-01-10 | Simplified computation of DID Index Address and renamed to DID Address. |
+| 0.71 | 2026-02-10 | Add did:handle specification appendix. |
 
 # Appendix A
 
@@ -991,3 +992,48 @@ This appendix provides example test vectors to guide implementers in ensuring co
 | {"b":2,"a":1} | {"a":1,"b":2} | \[Compute Hash\] |
 | {"x":\[{"y":true}\]} | {"x":\[{"y":true}\]} | \[Compute Hash\] |
 
+# Appendix E
+
+## did:handle Specification
+
+The **`did:handle`** method provides a simple, human-readable DID format for representing platform-specific user or service identifiers (e.g., social platforms, developer platforms, messaging systems).
+
+This method is intended for referential identity only and does not imply authentication, control, or ownership.
+
+## E.1 Syntax
+
+A **`did:handle`** MUST conform to the following format:
+
+**`did:handle:<platform>:<identifier>`**
+
+Where:
+
+* **`platform`** identifies the platform or namespace (e.g., github, twitter, discord)  
+* **`identifier`** identifies a user, organization, or resource within that platform
+
+## E.2 Canonicalization
+
+To ensure deterministic hashing and comparison, **`did:handle`** identifiers MUST be canonicalized as follows:
+
+* The DID scheme (**`did`**) and method name (**`handle`**) MUST be lowercase.  
+* The **`platform`** component MUST be lowercased.  
+* The **`identifier`** component MUST preserve its original case and byte representation.  
+* Additional normalization (including Unicode folding, trimming, or case transformation) MUST NOT be applied to **`identifier`**.
+
+
+## E.3 Semantics
+
+* **`platform`** is treated as a namespace identifier and is case-insensitive.  
+* **`identifier`** is treated as a platform-defined identifier and MAY be case-sensitive.  
+* Clients MUST NOT assume that identifiers differing only by case refer to the same entity unless the platform explicitly defines such behavior.
+
+
+## E.4 Usage Notes
+
+* **`did:handle`** does not define verification or control semantics.  
+* Trust assertions involving did:handle identifiers SHOULD rely on external attestations, confirmations, or platform-specific verification mechanisms.  
+* When used with hashing or address-derivation schemes, canonicalization MUST be applied prior to hashing.
+
+## E.5 **`identifier`** Registry
+
+A list of values for **`platform`** can be found in [social-platforms.ts](https://github.com/oma3dao/rep-attestation-frontend/blob/main/src/config/social-platforms.ts).  

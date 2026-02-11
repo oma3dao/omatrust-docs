@@ -285,6 +285,11 @@ When the resolved evidence is a human-readable statement (i.e., does not contain
 
 If these conditions are not met, a Handle-Link Statement evidence artifact MUST NOT be treated as valid proof of a Linked Identifier relationship.
 
+### 6.1.5 Linked Identifier Revocation
+
+* Linked Identifier attestations represent claims of active control and therefore MUST be revocable.  
+* Clients MUST reject any attestation that is not revocable, regardless of how revocability is expressed or enforced by the underlying transport or schema registration.
+
 ## 6.2 Key Binding
 
 ### 6.2.1 Key Binding Purpose
@@ -407,14 +412,16 @@ Expiration affects only the authorization state of the key; it does not invalida
 
 If **`expiresAt`** is omitted, the binding remains valid indefinitely unless revoked.
 
-#### 6.2.5.4 Revocation
+#### 6.2.5.4 Key Binding Revocation
 
 Revocation provides an explicit mechanism to deactivate a key, independent of expiry.
 
 * If the revoked field is **`true`**, the binding MUST be considered inactive regardless of the value of **`expiresAt`**.  
 * A revoked binding MUST NOT be used to authorize signatures, perform verification relationships, or fulfill the actions defined in **`keyPurpose`**.  
 * Revocation does not delete or override the historical Key Binding attestation; it only indicates its current lifecycle state.   
-* Revocation is effective from the timestamp at which the revocation attestation is issued.
+* Revocation is effective from the timestamp at which the revocation attestation is issued.  
+* Key Binding attestations represent claims of active control and therefore MUST be revocable.  
+* Clients MUST reject any attestation this is not revocable, regardless of schema-level settings.
 
 ### 6.2.6 Key Binding Failure Conditions
 
@@ -459,6 +466,121 @@ A Key Binding attestation is invalid if required fields in §6.2.2 are missing o
 * **`publicKeyJwk`** is present but malformed or inconsistent with **`keyId`**.
 
 These errors prevent interpretation of the binding and must result in rejection.
+
+## 6.3 Controller Witness
+
+### 6.3.1 Controller Witness Purpose
+
+#### 6.3.1.1 Overview
+
+The Controller Witness attestation provides a mechanism for anchoring temporal observations of controller assertions (e.g.- Linked Identifier and Key Binding) that are expressed in mutable offchain state, such as DNS records, web-hosted DID documents, or social platform profiles.
+
+In many cases, an entity may assert control over a key or identifier by publishing an **`evidence-pointer`** proof (for example, a **`DNS TXT`** record or a statement in **`/.well-known/did.json`** as specified in the OMATrust Proof Specification §5.3.5). Because such evidence is mutable and may be removed or altered after the fact, a verifier cannot later determine whether the assertion existed at a given point in time solely by inspecting the current offchain state.
+
+The Controller Witness attestation addresses this limitation by allowing a third-party witness to attest that, at a specific observation time, the **`subject’s`** offchain namespace asserted a particular controller. This attestation is recorded onchain, providing an immutable timestamped record of the witness’s observation, even if the offchain evidence is later changed or removed.
+
+Controller Witness attestations are intended to mitigate circular authorization problems that arise when an entity self-attests control (including key bindings) using credentials derived from the same control claim. By introducing an independent witness attester, the system enables verifiers to rely on an external confirmation that the controller assertion existed at the observed time.
+
+#### 6.3.1.2 Example
+
+The Controller Witness attestation is designed to prevent the following example scenario:
+
+* An x402 service provider issues cryptographically signed receipts for API usage. The service provider signs each receipt using a private key and publishes a DNS TXT record with the DID of the signing key.  
+* There is a defect in the service provider's API, and its clients do not get what they need.   
+* The service provider's clients use this receipt to post unfavorable user reviews about the resource URL  
+* Since these user reviews contain a cryptographic proof of transaction, other clients  listen to these user reviews and decide not to use the API service.   
+* The service provider decides to remove the DNS TXT record, so new clients can no longer verify the unfavorable user reviews because the **`evidence-pointer`** proof no longer exists. 
+
+Now consider the same scenario with a Controller Witness attestation. At the time the DNS TXT record is first published, a Controller Witness server observes the DNS TXT assertion and submits a Controller Witness attestation, anchoring that observation onchain with a specific timestamp. If the service provider later removes the DNS TXT record, verifiers inspecting current DNS state may no longer see the controller assertion. However, the onchain Controller Witness attestation remains immutable. Verifiers can determine that the service provider asserted control of the signing key at the time the receipts were issued and the reviews were created, and can continue to evaluate those historical attestations according to their trust policy.
+
+#### 6.3.1.3 Scope
+
+A Controller Witness attestation does not provide cryptographic proof of control, does not archive or hash offchain evidence, and does not guarantee the continued validity of the controller assertion after the observation time. Trust in a Controller Witness attestation derives from the identity and credibility of the witness attester, as determined by verifier policy.
+
+Controller Witness attestations are designed to be generic and may be used in support of multiple attestation types within this specification, including Linked Identifier attestations (§6.1) and Key Binding attestations (§6.2).
+
+### 6.3.2 Controller Witness Fields
+
+A Controller Witness attestation MUST conform to the following structure. The normative JSON schema is published in the OMA3 Github Repository.
+
+| Field | Req | Format | Description |
+| ----- | ----- | ----- | ----- |
+| attester | Yes | string | DID of the entity that witnessed the **`evidence-pointer`**. |
+| subject | Yes | string | The DID whose offchain namespace was observed by the witness. This is typically a **`did:web`** identifier corresponding to a domain or web-hosted service. |
+| controller | Yes | string | The DID of the controller of the **`subject`** at the time of **`observedAt`**. This MAY represent a cryptographic key (for example, **`did:pkh`** or **`did:key`**) or a non-key identifier expressed as a DID (for example, **`did:handle`**). |
+| method | Yes | string | The method by which the witness observed the controller assertion (see §6.3.3): **`dns-txt,`** **`did-json,`** **`social-profile`**,  **`manual`**. |
+| observedAt | Yes | integer  | Unix timestamp when the controller assertion was observed by the witness. |
+
+### 6.3.3 Observation Methodology
+
+A Controller Witness attestation records the method by which a witness observed a controller assertion in mutable offchain state. The observation methodology indicates where and how the witness determined that the subject asserted a particular controller at the time specified by **`observedAt`**.
+
+Controller assertions observed by a witness are typically expressed using the evidence-pointer format defined in the Proof specification, where the offchain evidence contains a string of the form:
+
+**`v=1;controller=<DID>`**
+
+The observation methodology identifies the location in which this assertion was found and provides context for how the witness performed the observation. Supported methodologies include, but are not limited to:
+
+* **`dns-txt`**: The witness observed the controller assertion in a DNS TXT record associated with the subject’s domain (for example, under a well-known or application-specific subdomain).  
+* **`did-json`**: The witness observed the controller assertion in a web-hosted DID document, such as **`/.well-known/did.json`**, associated with the subject.  
+* **`social-profile`**: The witness observed the controller assertion in a human-readable profile or post on a social or identity platform, such as a profile bio or pinned message.  
+* **`manual`**: The witness verified the controller assertion using a custom, out-of-band, or human-assisted process that does not fall into the above categories.
+
+The observation methodology provides descriptive context for the witness attestation but does not imply cryptographic verification, archival of evidence, or ongoing monitoring. A Controller Witness attestation asserts only that the witness observed the controller assertion at the specified time using the indicated methodology.
+
+Clients and verifiers MAY use the observation methodology as an input to local trust policy, including decisions about which witnesses or methodologies are acceptable for a given use case.
+
+### 6.3.4 Client Verification and Use
+
+Controller Witness attestations provide a timestamped record that a subject asserted a particular controller in mutable offchain state at the time specified by **`observedAt`**. Clients and verifiers MAY use Controller Witness attestations in different ways depending on their assurance requirements.
+
+A Controller Witness attestation is not bound to a specific Linked Identifier or Key Binding attestation (e.g.- a specific attestation UID).  Verifiers SHOULD correlate attestations by matching **`subject`** and **`controller`** values only.
+
+#### 6.3.4.1 Assurance Modes
+
+##### 6.3.4.1.1 Temporal Proof Mode (Historical Correctness)
+
+When evaluating whether a controller assertion was valid at the time a Linked Identifier or Key   
+Binding attestation became effective, a verifier SHOULD ensure that:
+
+* The Controller Witness **`observedAt`** timestamp is less than or equal to the attestation’s **`effectiveAt`**; and  
+* The attestation being evaluated has not been revoked.  
+* If **`effectiveAt`** is absent, verifiers SHOULD treat **`issuedAt`** as the effective time for ordering analysis.
+
+In this mode, the witness provides historical anchoring. The controller assertion is considered supported only if the witness observation occurred at or before the claim became effective.
+
+Subjects that desire this stronger assurance MAY:
+
+* Seek a Controller Witness attestation before registering the controller assertion attestation or;  
+* Make a controller assertion attestation that sets **`effectiveAt`** sufficiently in the future to allow a Controller Witness to be issued prior to that time.
+
+##### 6.3.4.1.2 Common-Control Mode (Identity Correlation)
+
+For use cases where the objective is to establish that a **`subject`** and **`controller`** were under common control at some point in time, verifiers MAY rely on a Controller Witness attestation regardless of when it was issued relative to the attestation’s **`effectiveAt`**.
+
+In this mode, the existence of a valid Controller Witness indicates that the subject asserted the controller at least once, even if that assertion occurred after the attestation being evaluated. 
+
+#### 6.3.4.2 Revocation and Expiration
+
+Controller assertions expressed through Linked Identifier or Key Binding attestations MAY be revoked or expired according to their respective specifications.
+
+When evaluating trust:
+
+* If a controller assertion attestation has been revoked, verifiers MUST NOT treat it as valid after the time of revocation.  
+* Signatures, receipts, or actions occurring after revocation SHOULD NOT be trusted under that controller assertion.  
+* Expiration (**`expiresAt`**) is functionally equivalent to revocation at the specified time.
+
+Revocation of a controller assertion does not invalidate historical facts established prior to revocation, provided that those facts were valid at the time they occurred.
+
+Controller Witness attestations themselves are historical observations and are not subject to revocation within this specification.
+
+#### 6.3.4.3 Multiple Controllers
+
+A subject MAY assert multiple controllers concurrently (for example, multiple keys). The presence of a new or additional controller assertion for the same **`subject`** does not, by itself, invalidate existing controller assertions.
+
+Verifiers SHOULD treat controller assertions as elements of a set. Each assertion is evaluated independently according to its own revocation and expiration status, and according to applicable assurance mode.
+
+This specification intentionally does not mandate a single verification policy. Clients and verifiers are responsible for selecting an assurance mode appropriate to their use case and for applying consistent ordering, revocation, and expiration rules.
 
 # 7\. Reputation Attestations
 
@@ -1065,14 +1187,13 @@ Notes:
 * When **`x-oma3-render`** is **`raw`**, implementations SHOULD validate that the input parses as valid JSON and conforms to the field's schema before submission.  
 * Local overrides take precedence: a field definition MAY override the render mode inherited from a **`$ref`** reference.
 
-# 
-
 # Change History
 
 | Version | Date | Comments |
 | ----- | ----- | :---- |
 | 0.1 | 2025-09-25 | Initial draft \- Alfred Tom |
 | 0.2 | 2025-12-10 | First complete draft- Alfred Tom |
+| 0.3 | 2026-02-10 | Add Controller Witness attestation.  Invalidate Linked Identifier and Key Binding attestations that are not revocable. |
 
 # Appendix A
 
