@@ -562,6 +562,27 @@ Verifiers MUST validate a **`evidence-pointer`** proof using the following proce
    2. If the evidence is a handle-link statement, the verifier MUST follow the verification procedure described in 5.3.5.2.  
 4. Accept/reject: The proof is valid only if the evidence artifact is retrievable and satisfies the verification requirements for its evidence mode and attestation context.
 
+#### 5.3.5.4 Evidence Retrieval and Resolution
+
+The proofObject.url field specifies the locator from which the verifier MUST obtain the evidence artifact containing the Evidence String defined in §5.3.5.2.
+
+The verifier MUST:
+
+* Retrieve the resource identified by proofObject.url.  
+* Extract an Evidence String conforming to §5.3.5.2.  
+* Apply the Verification Procedure defined in §5.3.5.3.
+
+The retrieval mechanism is locator-dependent:
+
+HTTP(S) Locators:  If the locator uses the http or https scheme, the verifier MUST perform an HTTP GET request and interpret the response body as either:
+
+* A raw Evidence String, or  
+* A structured artifact containing an Evidence String field.
+
+DNS TXT Locators: If the locator indicates DNS-based resolution (for example an HTTP-based DNS resolver endpoint), the verifier MUST resolve the TXT record at **`_omatrust.<domain>`** where **`<domain>`** is derived from the locator context. Multiple TXT values MAY be present. The verifier MUST treat multiple **`controller=`** entries as a co-controller set and MUST accept the evidence if any controller matches the expected verification context.
+
+The verifier MAY use any compliant DNS resolution mechanism (native DNS, DNS-over-HTTPS, DNS-over-TLS, or resolver APIs). The transport mechanism does not affect validity; only the resolved TXT value is authoritative.
+
 ### 5.3.6 Encoded Value Transactions (**`tx-encoded-value`**)
 
 The **`tx-encoded-value`** Proof Type is a deterministic “micro-challenge” proof for signers that cannot produce arbitrary signatures but can send a native-value transaction on a supported ledger. Instead of signing a message, the subject proves intent by transferring a precisely computed **`Amount`** of the chain’s native asset from the subject-controlled address to the Controller address specified in the attestation context. The **`Amount`** is derived from the proof context so that verifiers can recompute it independently and match it to an onchain transfer.
@@ -770,6 +791,7 @@ OMATrust does not redefine x402 offer verification semantics.
 | 0.1 | 2025-11-30 | Initial draft \- Alfred Tom |
 | 0.2 | 2025-12-22 | New extension-offer-and-receipt.md spec |
 | 0.21 | 2026-01-22 | x402 Signed Offer and Service Receipt Extension clarifications |
+| 0.22 | 2026-02-11 | Clarified resolution of proofObject.url for evidence-pointer |
 
 # Appendix A
 
