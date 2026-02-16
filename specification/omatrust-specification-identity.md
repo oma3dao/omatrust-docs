@@ -604,6 +604,14 @@ For any **`did`**, the corresponding EAS recipient address is derived as follows
 3. Truncate to an Ethereum address  
    1. The DID Address is the low-order 160 bits of **`didHash`**
 
+Output Encoding:
+
+* The DID Address is defined conceptually as a 20-byte value (bytes20).  
+* When serialized as a string (e.g., in SDKs, APIs, logs, and test vectors) the DID Address MUST be encoded as:  
+  * a \`0x\`-prefixed lowercase hexadecimal string  
+  * exactly 40 hexadecimal characters (20 bytes)  
+* EIP-55 checksum casing MUST NOT be required for interoperability.
+
 ### 5.3.3 Attestation Querying
 
 Clients can retrieve attestations related to a DID by computing its DID Address and filtering attestations accordingly.
@@ -713,6 +721,7 @@ This approach balances decentralized publishing with user trust, enabling permis
 | 0.6 | 2025-12-10 | Added dataUrl.registrations and version, clarified default hash algorithms and that summary is optional, refinements to artifacts, require new NFT mint on dataUrl change. |
 | 0.7 | 2026-01-10 | Simplified computation of DID Index Address and renamed to DID Address. |
 | 0.71 | 2026-02-10 | Add did:handle specification appendix. |
+| 0.72 | 2026-02-15 | Clarified DID Address format. |
 
 # Appendix A
 
@@ -820,9 +829,8 @@ library DidIndex {
     /// @notice Compute the DID Address used for EAS recipient or other address-keyed indexes.
     /// @dev didHash = keccak256(canonicalizeDID(did))
     function toAddress(bytes32 didHash) internal pure returns (address) {
-        // Domain-separated, versioned prefix for portability and clarity.
-        bytes32 h = keccak256(abi.encodePacked("DID:Solidity:Address:v1:", didHash));
-        return address(uint160(uint256(h)));
+    	  // The DID Address is the low-order 160 bits of didHash.
+        return address(uint160(uint256(didHash)));
     }
 }
 ```
