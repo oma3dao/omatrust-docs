@@ -368,7 +368,7 @@ This object is called a DID Document.  Here is an example DID Document:
 
 To verify this method, the Issuer MUST retrieve the DID Document located at **`[url]/.well-known/did.json`** and verify that the owner address appears as an array element of the **`verificationMethod`** field in the DID Document returned by the endpoint.
 
-* **dns:\<domain\>**: The identifier "dns:\<domain\>" asserts control of \<domain\> via a DNS TXT record.  The Owner MUST publish a TXT record at:   **`_omatrust.<domain>`**. The TXT value MUST be a sequence of key=value pairs separated by semicolons or spaces:
+* **dns:\<domain\>**: The identifier "dns:\<domain\>" asserts control of \<domain\> via a DNS TXT record.  The Owner MUST publish a TXT record at: **`_controllers.<domain>`**. The TXT value MUST be a sequence of key=value pairs separated by semicolons or spaces:
 
   v=1              (protocol version, fixed to "1")
 
@@ -722,6 +722,7 @@ This approach balances decentralized publishing with user trust, enabling permis
 | 0.7 | 2026-01-10 | Simplified computation of DID Index Address and renamed to DID Address. |
 | 0.71 | 2026-02-10 | Add did:handle specification appendix. |
 | 0.72 | 2026-02-15 | Clarified DID Address format. |
+| 0.73 | 2026-04-01 | Changed \_omatrust to \_controllers |
 
 # Appendix A
 

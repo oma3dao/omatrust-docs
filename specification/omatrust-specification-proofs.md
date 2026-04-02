@@ -579,7 +579,7 @@ HTTP(S) Locators:  If the locator uses the http or https scheme, the verifier MU
 * A raw Evidence String, or  
 * A structured artifact containing an Evidence String field.
 
-DNS TXT Locators: If the locator indicates DNS-based resolution (for example an HTTP-based DNS resolver endpoint), the verifier MUST resolve the TXT record at **`_omatrust.<domain>`** where **`<domain>`** is derived from the locator context. Multiple TXT values MAY be present. The verifier MUST treat multiple **`controller=`** entries as a co-controller set and MUST accept the evidence if any controller matches the expected verification context.
+DNS TXT Locators: If the locator indicates DNS-based resolution (for example an HTTP-based DNS resolver endpoint), the verifier MUST resolve the TXT record at **`_controllers.<domain>`** where **`<domain>`** is derived from the locator context. Multiple TXT values MAY be present. The verifier MUST treat multiple **`controller=`** entries as a co-controller set and MUST accept the evidence if any controller matches the expected verification context.
 
 The verifier MAY use any compliant DNS resolution mechanism (native DNS, DNS-over-HTTPS, DNS-over-TLS, or resolver APIs). The transport mechanism does not affect validity; only the resolved TXT value is authoritative.
 
@@ -792,6 +792,7 @@ OMATrust does not redefine x402 offer verification semantics.
 | 0.2 | 2025-12-22 | New extension-offer-and-receipt.md spec |
 | 0.21 | 2026-01-22 | x402 Signed Offer and Service Receipt Extension clarifications |
 | 0.22 | 2026-02-11 | Clarified resolution of proofObject.url for evidence-pointer |
+| 0.23 | 2026-04-01 | Moved from \_omatrust to \_controllers |
 
 # Appendix A
 
