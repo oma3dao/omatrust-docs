@@ -74,7 +74,7 @@ The following definitions are used within the present document.
 | Application | A software service that can come in many formats, including a self-contained software application on a Device, an API endpoint, or a smart contract. |
 | Client | Software that queries OMATrust to obtain information on an Application. |
 | Decentralized Identifier | An identifier that adheres to the W3C DID standard. |
-| DID Document | A JSON-LD document containing information about the DID, such as public keys and service endpoints. |
+| DID Document | A JSON-LD document containing information about the DID, such as public keys and services. |
 | Owner | The entity that controls the address that owns the app token.  Owner may or may not be the same entity that minted the token. |
 | Issuer | An entity that issues credentials as attestations in the Reputation Service. |
 
@@ -144,7 +144,7 @@ The objects in the **`versionHistory`** array have the following fields:
 | traits | \[string\] | An array of max 20 traits and the total char count cannot exceed 120\. See Appendix C. | O | O | O |
 | interfaceVersions | \[string\] | Array of supported versions of the interface | N | O | O |
 | platforms | JSON | Object of platforms supported by the app. | Y | N | N |
-| endpoints | \[JSON\] | Array of endpoint objects (see below) | N | Y | O |
+| services | \[JSON\] | Array of **`services`** objects (see below) | N | Y | O |
 | artifacts | JSON | Allows clients to verify content (e.g.- binaries) | O | O | N |
 | registrations | \[JSON\] | Array of App Registry tokenizations | Y | Y | Y |
 | version | string | x.y.z | O | O | O |
@@ -178,25 +178,26 @@ A **`platform`** field is a JSON object that has the following fields:
 | downloadUrl | string | URL to download a binary | O |
 | artifactDid | string | See Appendix A | O |
 
-#### 5.1.2.2 JSON Format: **`dataUrl.endpoints`**
+#### 5.1.2.2 JSON Format: **`dataUrl.services`**
 
-The **`endpoints`** field contains an array JSON objects, each of which contains the following fields:
+The **`services`** field contains an array JSON objects, each of which contains the following fields:
 
 | Value | Format | Description | Required |
 | ----- | ----- | ----- | ----- |
 | name | string | MCP, A2A, etc. | Y |
 | endpoint | string | URL of the endpoint | Y |
-| schemaUrl | string | URL to API schema or documentation | O |
+| version | string | Service-specific | O |
+| schemaUrl | string | URL to API schema or documentation.   | O |
 
 For **`interface`** \= 4 (contracts), the chain ID is taken from the DID (did:pkh with CAIP-10 ID). Clients can then determine the format the RPC endpoint requires based on the chain ID. 
 
-There are additional option fields in endpoints depending on the type of 
+There are additional option fields in **`services`** depending on the type of 
 
 #### 5.1.2.3 Endpoint Type MCP
 
-If an object in **`dataUrl.endpoints`** has **`name`** equal to **`MCP`** (see 5.1.2.2) the endpoint object holds additional fields that represent the MCP specification and give agents the information they need to interface with an MCP server.  The reader is referred to the specification of MCP v1.0 (modelcontextprotocol.io, Section 3, Server Metadata), which has descriptions of each field and is incorporated by reference.  
+If an object in **`dataUrl.services`** has **`name`** equal to **`MCP`** (see 5.1.2.2) the endpoint object holds additional fields that represent the MCP specification and give agents the information they need to interface with an MCP server.  The reader is referred to the specification of MCP v1.0 (modelcontextprotocol.io, Section 3, Server Metadata), which has descriptions of each field and is incorporated by reference.  
 
-The following are the additional JSON fields for an **`endpoints`** object:
+The following are the additional JSON fields for an **`services`** object:
 
 | Value | Format | Description | Required |
 | ----- | ----- | ----- | ----- |
@@ -206,7 +207,7 @@ The following are the additional JSON fields for an **`endpoints`** object:
 | transport | JSON | See below | Y |
 | authentication | JSON | See below | Y |
 
-##### 5.1.2.3.1 MCP JSON Format: **`dataUrl.endpoints[0].tools`**
+##### 5.1.2.3.1 MCP JSON Format: **`dataUrl.services[0].tools`**
 
 The **`tools`** array contains JSON objects with the following fields:
 
@@ -217,7 +218,7 @@ The **`tools`** array contains JSON objects with the following fields:
 | inputSchema | JSON |  | Y |
 | annotations | JSON |  | N |
 
-##### 5.1.2.3.2 MCP JSON Format: **`dataUrl.endpoints[0].resources`**
+##### 5.1.2.3.2 MCP JSON Format: **`dataUrl.services[0].resources`**
 
 The **`resources`** array contains JSON objects with the following fields:
 
@@ -228,7 +229,7 @@ The **`resources`** array contains JSON objects with the following fields:
 | description | string |  | N |
 | mimeType | string |  | N |
 
-##### 5.1.2.3.3 MCP JSON Format: **`dataUrl.endpoints[0].prompts`**
+##### 5.1.2.3.3 MCP JSON Format: **`dataUrl.services[0].prompts`**
 
 The **`prompts`** array contains JSON objects with the following fields:
 
@@ -238,7 +239,7 @@ The **`prompts`** array contains JSON objects with the following fields:
 | description | string |  | Y |
 | arguments | \[JSON\] |  | N |
 
-##### 5.1.2.3.4 MCP JSON Format: **`dataUrl.endpoints[0].transport`**
+##### 5.1.2.3.4 MCP JSON Format: **`dataUrl.services[0].transport`**
 
 The **`transport`** JSON object contains the following fields:
 
@@ -247,7 +248,7 @@ The **`transport`** JSON object contains the following fields:
 | http | JSON |  | N |
 | stdio | JSON |  | N |
 
-##### 5.1.2.3.5 MCP JSON Format: **`dataUrl.endpoints[0].authentication`**
+##### 5.1.2.3.5 MCP JSON Format: **`dataUrl.services[0].authentication`**
 
 The **`authentication`** JSON object contains the following fields:
 
@@ -320,6 +321,15 @@ JSON example for the **`artifacts`** field:
   }
 }
 ```
+
+#### 5.1.2.5 JSON Format: **`dataUrl.registrations`**
+
+**`registrations`** is a JSON object defined in the ERC-8004 specification that has the following fields:
+
+| Value | Format | Description | Required |
+| ----- | ----- | ----- | ----- |
+| agentId | integer | Must equal the NFT **`tokenId`** | Y |
+| agentRegistry | string | CAIP-10 ID of the NFT contract | Y |
 
 ### 5.1.3 Metadata Confirmation
 
@@ -722,7 +732,8 @@ This approach balances decentralized publishing with user trust, enabling permis
 | 0.7 | 2026-01-10 | Simplified computation of DID Index Address and renamed to DID Address. |
 | 0.71 | 2026-02-10 | Add did:handle specification appendix. |
 | 0.72 | 2026-02-15 | Clarified DID Address format. |
-| 0.73 | 2026-04-01 | Changed \_omatrust to \_controllers |
+| 0.73 | 2026-04-01 | Changed \_omatrust to \_controllers. |
+| 0.8 | 2026-04-08 | Support latest version of ERC-8004 Specification. |
 
 # Appendix A
 
