@@ -324,7 +324,7 @@ JSON example for the **`artifacts`** field:
 
 #### 5.1.2.5 JSON Format: **`dataUrl.registrations`**
 
-**`registrations`** is a JSON object defined in the ERC-8004 specification that has the following fields:
+**`registrations`** is a JSON array of objects, as defined in the ERC-8004 specification, that has the following fields:
 
 | Value | Format | Description | Required |
 | ----- | ----- | ----- | ----- |
@@ -396,7 +396,7 @@ Multiple **`controller`** values indicate co-controllers. For rotation, both old
 
 ##### 5.1.3.1.2 **`did:pkh`** Confirmation
 
-This DID method is used to tokenize a smart contract application. Smart contracts do not need to be tokenized in order for users to file attestations on them. Attestations can be filed directly with an attestation service using the DID → DID Address Mapping method (Section 5.3.2). Tokenizing a smart contract is primarily for discovery and usage information. 
+This DID method is used to tokenize a smart contract application. Smart contracts do not need to be tokenized in order for users to file attestations on them. Tokenizing a smart contract is primarily for discovery and usage information. 
 
 If a smart contract is tokenized, the Issuer MUST confirm that the address minting the smart contract token is controlled by the same entity that either administered or deployed the contract.  For EVM contracts:
 
@@ -589,13 +589,13 @@ The OMATrust Reputation System leverages and augments existing services like Eth
 
 1. Attestation Schemas:  OMA3 defines several schemas for different attestations, from user reviews to cybersecurity certifications.  These are defined in the OMATrust Reputation Specification (§6–7).  
      
-2. Cross Chain Addresses:  Instead of using chain-specific blockchain addresses to identify the attestation subject, OMATrust uses hashed DIDs in the same format as addresses (see DID → DID Address Mapping Section 5.3.2), which support web domains as well as blockchain addresses.  
+2. Cross Chain Addresses:  Instead of using chain-specific blockchain addresses to identify the attestation subject, OMATrust uses hashed DIDs, which support web domains as well as blockchain addresses.  
      
 3. Resolver:  the Resolver contract stores onchain attestations related to ownership, as described above.
 
-### 5.3.2 DID → DID Address Mapping and Searching
+### 5.3.2 DID → DID Address Mapping and Searching (EVM)
 
-Ethereum Attestation Service (EAS) identifies the subject of an attestation using an address-typed recipient field. Because DIDs are variable-length strings, OMATrust defines a deterministic mapping from a DID to an Ethereum address, called an DID Address, solely for use with EAS.
+OMATrust leverages Ethereum Attestation Service (EAS) on EVM chains.  EAS identifies the subject of an attestation using an address-typed recipient field. Because DIDs are variable-length strings, OMATrust defines a deterministic mapping from a DID to an Ethereum address, called an DID Address, solely for use with EAS.
 
 This address is an indexing label only. It is not an identity, does not imply control or ownership, and MUST NOT be interpreted as a wallet or transaction destination.
 
@@ -734,6 +734,7 @@ This approach balances decentralized publishing with user trust, enabling permis
 | 0.72 | 2026-02-15 | Clarified DID Address format. |
 | 0.73 | 2026-04-01 | Changed \_omatrust to \_controllers. |
 | 0.8 | 2026-04-08 | Support latest version of ERC-8004 Specification. |
+| 0.81 | 2026-04-10 | Limit DID Address to EVM-specific sections. |
 
 # Appendix A
 
