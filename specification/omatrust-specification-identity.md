@@ -376,7 +376,7 @@ This object is called a DID Document.  Here is an example DID Document:
 }
 ```
 
-To verify this method, the Issuer MUST retrieve the DID Document located at **`[url]/.well-known/did.json`** and verify that the owner address appears as an array element of the **`verificationMethod`** field in the DID Document returned by the endpoint.
+To verify this method, the Issuer MUST retrieve the DID Document located at **`[url]/.well-known/did.json`** and verify that the owner address appears as an array element of the **`verificationMethod`** field in the DID Document returned by the endpoint.  Note that for purposes of **`did:web`** ownership verification, OMATrust first normalizes the host component of the DID by lowercasing it, removing any trailing **`.`**, and stripping a leading **`www`**. For example, **`did:web:www.example.com`** and **`did:web:example.com`** are treated as the same canonical subject.
 
 * **dns:\<domain\>**: The identifier "dns:\<domain\>" asserts control of \<domain\> via a DNS TXT record.  The Owner MUST publish a TXT record at: **`_controllers.<domain>`**. The TXT value MUST be a sequence of key=value pairs separated by semicolons or spaces:
 
@@ -606,7 +606,7 @@ For any **`did`**, the corresponding EAS recipient address is derived as follows
 1. Canonicalize the DID:    
    1. Apply normalization rules defined by the DID method.  
    2. Examples:  
-      1. **`did:web`**: lowercase the host, apply IDNA/punycode for international domains, preserve the path.  
+      1. **`did:web`**: lowercase the host, strip any leading **`www`** and trailing **`.`**, apply IDNA/punycode for international domains, preserve the path.   
       2. **`did:pkh`**: use the canonical CAIP-10 chain/account encoding.  
 2. Compute the **`didHash`**  
    1. The **`didHash`** is the keccak256 digest of the canonicalized DID string  
@@ -735,6 +735,7 @@ This approach balances decentralized publishing with user trust, enabling permis
 | 0.73 | 2026-04-01 | Changed \_omatrust to \_controllers. |
 | 0.8 | 2026-04-08 | Support latest version of ERC-8004 Specification. |
 | 0.81 | 2026-04-10 | Limit DID Address to EVM-specific sections. |
+| 0.82 | 2026-04-23 | Change definition of DID Address to strip www subdomains. |
 
 # Appendix A
 
