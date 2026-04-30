@@ -23,29 +23,26 @@ OMATrust is a decentralized verification protocol that enables developers, audit
 
 OMATrust follows a **modular architecture** where each repository serves a specific function:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        OMATrust Repositories                    │
-├─────────────────────────────────────────────────────────────────┤
-│  Documentation Layer                                            │
-│  └── omatrust-docs (this repo)                                  │
-├─────────────────────────────────────────────────────────────────┤
-│  Frontend Applications                                          │
-│  ├── app-registry-frontend                                      │
-│  └── rep-attestation-frontend                                   │
-├─────────────────────────────────────────────────────────────────┤
-│  Smart Contracts & Infrastructure                               │
-│  ├── app-registry-evm-solidity                                  │
-│  └── rep-attestation-tools-evm-solidity                         │
-└─────────────────────────────────────────────────────────────────┘
-```
+| Repository                                                                                                 | Purpose                                                        | Status     |
+| ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ---------- |
+| **[omatrust-docs](https://github.com/oma3dao/omatrust-docs)**                                              | Whitepaper, specification, and protocol documentation          | Active     |
+| **[developer-docs](https://github.com/oma3dao/developer-docs)**                                            | Developer-facing documentation site (Docusaurus)               | Active     |
+| **[app-registry-frontend](https://github.com/oma3dao/app-registry-frontend)**                              | Web interface for registering applications                     | Active     |
+| **[rep-attestation-frontend](https://github.com/oma3dao/rep-attestation-frontend)**                        | Web interface for submitting and viewing attestations          | Active     |
+| **[omatrust-backend](https://github.com/oma3dao/omatrust-backend)**                                        | Backend service for account, subscription, and delegated flows | Active     |
+| **[omatrust-api-gateway](https://github.com/oma3dao/omatrust-api-gateway)**                                | API gateway for OMATrust services (Vercel serverless)          | Active     |
+| **[omatrust-widgets](https://github.com/oma3dao/omatrust-widgets)**                                        | Embeddable trust signal components                             | Active     |
+| **[omatrust-sdk](https://github.com/oma3dao/omatrust-sdk)**                                                | Framework-agnostic TypeScript SDK (`@oma3/omatrust`)           | Active     |
+| **[omatrust-landing](https://github.com/oma3dao/omatrust-landing)**                                        | Public marketing / landing page                                | Active     |
+| **[app-registry-evm-solidity](https://github.com/oma3dao/app-registry-evm-solidity)**                      | Smart contracts for app registration and tokenization          | Active     |
+| **[rep-attestation-tools-evm-solidity](https://github.com/oma3dao/rep-attestation-tools-evm-solidity)**    | Attestation schemas and tools for reputation system            | Active     |
+| **[oma3-ops](https://github.com/oma3dao/oma3-ops)**                                                        | Operational tooling, deployment scripts, governance config     | Active     |
 
-| Repository | Purpose | Links To |
-|------------|---------|----------|
-| **[app-registry-evm-solidity](https://github.com/oma3dao/app-registry-evm-solidity)** | Smart contracts for app registration and tokenization | Used by registry frontend |
-| **[rep-attestation-tools-evm-solidity](https://github.com/oma3dao/rep-attestation-tools-evm-solidity)** | Attestation schemas and tools for reputation system | Used by reputation frontend |
-| **[app-registry-frontend](https://github.com/oma3dao/app-registry-frontend)** | Web interface for registering applications | Calls registry contracts |
-| **[rep-attestation-frontend](https://github.com/oma3dao/rep-attestation-frontend)** | Web interface for submitting and viewing attestations | Uses attestation schemas |
+### Deprecated Repositories
+
+| Repository                   | Reason                                                                           |
+| ---------------------------- | -------------------------------------------------------------------------------- |
+| `app-metadata-evm-solidity`  | Legacy metadata contract. Functionality merged into `app-registry-evm-solidity`. |
 
 ### How They Work Together
 
@@ -53,7 +50,13 @@ OMATrust follows a **modular architecture** where each repository serves a speci
 
 **Reputation**: Users and auditors submit reviews/certifications through `rep-attestation-frontend`, using schemas from `rep-attestation-tools-evm-solidity`.
 
+**Backend**: The `omatrust-backend` handles account management, subscriptions, and delegated attestation flows. The `omatrust-api-gateway` routes API calls to backend services.
+
+**SDK & Widgets**: The `omatrust-sdk` provides a TypeScript SDK for integrating OMATrust into any application. The `omatrust-widgets` package provides embeddable UI components for displaying trust signals.
+
 **Verification**: Applications can query both systems to display trust signals to users.
+
+**Governance**: Branch protection rulesets and CI configuration are managed centrally in `oma3-ops/github-governance/`.
 
 
 ## Getting Started
