@@ -6,15 +6,15 @@
   <script src="https://www.w3.org/Tools/respec/respec-w3c" class="remove" defer></script>
   <script class="remove">
     var respecConfig = {
-      specStatus: "unofficial",
+      specStatus: "ED",
       shortName: "did-artifact",
       // TODO(OMA3): fill in editors before submission.
       editors: [
-        { name: "TODO Editor", company: "OMA3", companyURL: "https://www.oma3.org/" }
+        { name: "Alfred Tom", company: "OMA3", companyURL: "https://www.oma3.org/" }
       ],
       github: "oma3dao/omatrust-docs",
-      edDraftURI: "https://oma3dao.github.io/did-artifact/",
-      latestVersion: "https://oma3dao.github.io/did-artifact/",
+      edDraftURI: "https://oma3dao.github.io/omatrust-docs/specification/did-artifact-method-spec.html",
+      latestVersion: "https://oma3dao.github.io/omatrust-docs/specification/did-artifact-method-spec.html",
       license: "w3c-software-doc",
       xref: ["DID-CORE", "INFRA", "URL"],
       localBiblio: {
@@ -83,11 +83,15 @@
 
 <section id="sotd">
   <p>
-    This is an unofficial draft prepared for eventual submission to the
-    [[DID-SPEC-REGISTRIES]]. It has not been reviewed or endorsed by W3C or any working
-    group. Two design decisions are flagged inline as <strong>Editorial decisions</strong>
-    and are the most likely points to revise before submission: (1) resolution is
-    <em>generative and offline</em>, and (2) version 1 permits exactly one hash algorithm.
+    This document is an Editor's Draft produced by
+    <a href="https://www.oma3.org/">OMA3</a> as part of its standardization process. It has
+    not yet been ratified by OMA3 membership and is subject to change. Two design decisions
+    are flagged inline as <strong>Editorial decisions</strong> and are the most likely points
+    to revise before ratification: (1) resolution is <em>generative and offline</em>, and
+    (2) version 1 permits exactly one hash algorithm.
+  </p>
+  <p>
+    This specification is also being prepared for submission to the [[DID-SPEC-REGISTRIES]].
   </p>
 </section>
 
@@ -95,11 +99,11 @@
   <h2>Introduction</h2>
   <p>
     Most DID methods name a <em>subject</em> whose state lives somewhere&mdash;a ledger, a
-    domain, a key&mdash;and resolving the DID means reading that state. Such methods inherit
-    a structural difficulty: [[DID-CORE]] does not define a canonical resolver, and where the
-    underlying registry is not globally deterministic (for example, a web origin that may
-    serve different bytes to different clients or over time), two honest resolvers can return
-    different documents for the same DID with no defined arbiter.
+    domain, a key&mdash;and resolving the DID means reading that state. Because [[DID-CORE]]
+    intentionally leaves resolver selection to implementations, methods whose underlying
+    registry is not globally deterministic (for example, a web origin that may serve
+    different bytes to different clients or over time) may produce different documents from
+    different resolvers for the same DID.
   </p>
   <p>
     <code>did:artifact</code> avoids this entire class of problem by naming content rather
@@ -306,6 +310,11 @@ base32-lower   = %x61-7A / %x32-37          ; "a"-"z" and "2"-"7"
 
   <section>
     <h3>Container image (OCI)</h3>
+    <p class="note" title="Work in progress">
+      This section is a work in progress and subject to significant revision before
+      ratification. The general approach is described below, but detailed procedures and
+      edge cases require further development.
+    </p>
     <p>
       For an artifact of type <code>container</code>, the canonical octets are the OCI image
       manifest octets (<code>application/vnd.oci.image.manifest.v1+json</code>) as stored in
@@ -318,6 +327,11 @@ base32-lower   = %x61-7A / %x32-37          ; "a"-"z" and "2"-"7"
 
   <section>
     <h3>Website proof artifacts</h3>
+    <p class="note" title="Work in progress">
+      This section is a work in progress and subject to significant revision before
+      ratification. The artifact types described below are provisional; detailed
+      canonicalization procedures and tooling requirements are under active development.
+    </p>
     <p>
       A live website is not a fixed octet sequence and cannot be named directly; instead a
       <em>proof artifact</em> derived from it is named. This version defines two, each a
@@ -389,18 +403,46 @@ base32-lower   = %x61-7A / %x32-37          ; "a"-"z" and "2"-"7"
 
     <section id="did-document">
       <h4>The DID document</h4>
-      <p>The DID document for a <code>did:artifact</code> DID is exactly:</p>
+      <p>The DID document for a <code>did:artifact</code> DID is at minimum:</p>
       <pre class="json example" title="Minimal DID document">
 {
   "@context": "https://www.w3.org/ns/did/v1",
-  "id": "did:artifact:b<cidv1>"
+  "id": "did:artifact:bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenpcqyaua"
 }
       </pre>
       <p>
-        The document MUST contain only the <code>@context</code> and <code>id</code>
+        The document MUST contain the <code>@context</code> and <code>id</code>
         properties. A resolver MUST NOT add <code>verificationMethod</code>,
         <code>authentication</code>, any other verification relationship, or
-        <code>service</code> entries.
+        <code>service</code> entries other than those defined below.
+      </p>
+
+      <h5>Optional artifact URL</h5>
+      <p>
+        A resolver MAY include a <code>service</code> entry of type
+        <code>ArtifactSource</code> to indicate a location from which the artifact octets
+        can be retrieved. This does not affect the validity of the DID document&mdash;a
+        document without this field is equally valid&mdash;but it provides a convenience
+        for consumers that need to dereference the artifact.
+      </p>
+      <pre class="json example" title="DID document with optional artifact source">
+{
+  "@context": "https://www.w3.org/ns/did/v1",
+  "id": "did:artifact:bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenpcqyaua",
+  "service": [{
+    "id": "did:artifact:bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenpcqyaua#source",
+    "type": "ArtifactSource",
+    "serviceEndpoint": "https://example.com/artifacts/my-app-v2.3.1.tar.gz"
+  }]
+}
+      </pre>
+      <p>
+        The <code>serviceEndpoint</code> URL is advisory only. The artifact obtained from
+        this URL MUST still be verified against the DID using the procedure in
+        <a href="#verification"></a>. The URL confers no trust; it is a hint for discovery.
+        Different resolvers MAY return different URLs for the same DID (for example,
+        pointing to different mirrors), and all are acceptable provided the fetched bytes
+        pass verification.
       </p>
       <aside class="note" title="Referential, self-verifying identity">
         <p>
@@ -625,7 +667,7 @@ base32-lower   = %x61-7A / %x32-37          ; "a"-"z" and "2"-"7"
       <tr><th>Method Name</th><td><code>artifact</code></td></tr>
       <tr><th>Status</th><td>Provisional</td></tr>
       <tr><th>Specification</th><td>This document</td></tr>
-      <tr><th>Contact</th><td>OMA3 (TODO: contact address)</td></tr>
+      <tr><th>Contact</th><td>OMA3 (info@oma3.org)</td></tr>
       <tr><th>Verifiable Data Registry</th><td>None (generative; identifier derived from content)</td></tr>
       <tr><th>Supports Update</th><td>No</td></tr>
       <tr><th>Supports Deactivate</th><td>No</td></tr>
@@ -643,6 +685,31 @@ base32-lower   = %x61-7A / %x32-37          ; "a"-"z" and "2"-"7"
     binary CID (hex), and the final <code>did:artifact</code> string, verified to agree across
     at least two independent runtimes.
   </p>
+</section>
+
+<section class="appendix informative">
+  <h2>OMA3 standards using <code>did:artifact</code></h2>
+  <p>
+    The following OMA3 standards and specifications reference <code>did:artifact</code> as
+    an identifier for immutable artifacts:
+  </p>
+  <dl>
+    <dt><strong>OMATrust</strong></dt>
+    <dd>
+      The OMATrust protocol uses <code>did:artifact</code> to identify specific versions of
+      applications, APIs, websites, and smart contracts that are the subject of trust
+      attestations. When an auditor or user submits a reputation attestation, the attestation
+      references the exact artifact that was reviewed via its <code>did:artifact</code>
+      identifier, ensuring that trust signals are bound to a precise, verifiable byte
+      sequence.
+    </dd>
+    <dt><strong>MPAS (Metaverse Payment and Asset Standard)</strong></dt>
+    <dd>
+      MPAS uses <code>did:artifact</code> to identify immutable asset definitions and
+      payment protocol artifacts that must be verifiable across interoperable metaverse
+      environments.
+    </dd>
+  </dl>
 </section>
 
 </body>
