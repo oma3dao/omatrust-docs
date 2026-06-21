@@ -389,7 +389,7 @@ Examples:
 
 ```
 v=1;controller=did:pkh:eip155:1:0x89a932207c485f85226d86f7cd...
-v=1 controller=did:pkh:eip155:1:0x11... controller=eip155:1:0x22
+v=1 controller=did:pkh:eip155:1:0x11... controller=did:pkh:eip155:1:0x22
 ```
 
 Multiple **`controller`** values indicate co-controllers. For rotation, both old and new controllers SHOULD be published during an overlap period. If the apex cannot be modified, the record MAY be published on a subdomain (e.g., id.example.com), in which case the identifier string is **`did:web:id.example.com`**. Issuers MUST query authoritative name servers and SHOULD validate DNSSEC when available. The minting wallet MUST match one of the **`controller`** values to prove ownership.
@@ -736,130 +736,36 @@ This approach balances decentralized publishing with user trust, enabling permis
 | 0.8 | 2026-04-08 | Support latest version of ERC-8004 Specification. |
 | 0.81 | 2026-04-10 | Limit DID Address to EVM-specific sections. |
 | 0.82 | 2026-04-23 | Change definition of DID Address to strip www subdomains. |
+| 0.83 | 2026-06-20 | Move did:artifact into separate spec. |
 
 # Appendix A
 
-## did:artifact Specification
+## did:artifact Use
 
-Provisional DID method used within this specification to identify verifiable payloads (binaries, containers, and website proof files such as SRI manifests or site snapshots). A standalone method spec and registry entry will follow.
+## **A.1 Integration Hooks**
 
-## **A.1 Overview**
-
-**`did:artifact`** is a content-addressable identifier. The method-specific ID is a CIDv1 (multibase base32-lower) whose multihash encodes the hash algorithm and digest of the artifact’s bytes.
-
-**V1 requirement:** the multihash MUST be SHA-256 (32-byte digest- see Section 5.1.3.4.3).
-
-* Binaries/containers: hash the file/image bytes.  
-* Websites: hash a proof artifact (e.g., JCS-canonicalized SRI manifest JSON, or a site snapshot archive).  
-* Each artifact gets its own DID; different files/proofs → different DIDs.
-
-## 
-
-## **A.2 Identifier Syntax**
-
-```
-did:artifact:<cidv1>
-```
-
-* **`<cidv1>`** MUST be CIDv1 encoded with multibase base32-lower.  
-* The CID’s multihash MUST use SHA-256 under this spec version (5.1.3.4.3).  
-* The multicodec SHOULD be **`raw`** for opaque bytes. Using a more specific codec does not change verification semantics.
-
-## 
-
-## **A.3 Computing `artifactDid`**
-
-**Common procedure (all artifact types):**
-
-1. Obtain the exact artifact bytes (after any required canonicalization for that type).  
-2. Compute SHA-256 over those bytes (5.1.3.4.3).  
-3. Wrap as multihash (function code \+ length \+ digest).  
-4. Build **`CIDv1`** (multicodec **`raw`** unless specified otherwise).  
-5. Multibase-encode (base32-lower) → prepend **`did:artifact:`**.
-
-**Type notes:**
-
-* **Binary / Installer / Archive:** use bytes exactly as distributed (no repacking). Apply common procedure.  
-* **Container (OCI):** use the OCI image manifest bytes as stored in the registry (**`application/vnd.oci.image.manifest.v1+json`**). Apply common procedure.  
-* **Website SRI manifest (JSON):** canonicalize with JCS (JSON Canonicalization Scheme), then apply common procedure to the canonical UTF-8 bytes.  
-  * Paths in the manifest MUST be same-origin absolute paths (no query/fragment). Producer normalization: single percent-decode, Unicode NFC, collapse `//`, strip trailing `/` (except root), preserve case.  
-* **Website snapshot (archive):** create a deterministic archive when possible (fixed owner/mode/timestamps). Apply common procedure to the archive bytes.
-
-
-## **A.4 Verification (Client Requirements)**
-
-When a record references an **`artifactDid`**, verifiers MUST:
-
-1. Fetch bytes from any location (HTTP(S), ipfs://, local, etc.).  
-2. Recompute CIDv1(SHA-256- Section 5.1.3.4.3) per A.3.  
-3. Require equality with the referenced **`artifactDid`**. If different → invalid, regardless of URL or signature.
-
-**Websites:**
-
-* If the artifact is an SRI manifest, verifiers SHOULD also validate loaded assets against the per-file SRI hashes.  
-* If the artifact is a snapshot, verifiers MAY present a “verified snapshot” badge when the content matches.
-
-**No trust from URLs.** Links are advisory for discovery/distribution only.
-
-## 
-
-## **A.5 Data Model Integration (normative hooks)**
-
-* **`dataUrl.platforms`**  
+* **dataUrl.platforms**:  
   * **`launchUrl`** (required) is the user-facing deep link/store page.  
   * **`artifactDid`** (optional) SHOULD be present when a platform ships verifiable bytes (desktop installer/CLI/container) or a website proof artifact.  
-  * If **`artifactDid`** is present, a matching entry MUST exist at **`dataUrl.artifacts[artifactDid]`**. See A.6.  
-* **`dataUrl.artifacts`** (map keyed by **`artifactDid`**)  
-  * Key: **`did:artifact:<cidv1>`** per this appendix.  
-  * Type-specific:  
-    * binary/container: **`os`**, **`arch`**, optional **`libc`**, **`variant`**; container may include **`ociDigest`**.  
-    * website: **`originDid`** (**`did:web:<apex>`)**, and either inline **`sriManifest`** (the canonicalized JSON used for hashing) **or** pointers **`manifestDid`**/**`snapshotDid`** (both **`did:artifact:*`**).  
-      
+  * If **`artifactDid`** is present, a matching entry MUST exist at **`dataUrl.artifacts[artifactDid]`**.  
+* **dataUrl.artifacts**: A map keyed by **`did:artifact:<cidv1>`** per the standalone specification.
 
-## **A.6 Policy (V1)**
 
-* **Allowed hash:** only SHA-256 is permitted for producing **`did:artifact`** values under this spec version. Verifiers MUST read the multihash algorithm but MUST reject non-permitted algorithms.  
-* **Website scope:** website proof artifacts MUST be scoped to an apex origin; cross-origin redirects MUST NOT be followed during attestation/verification.  
-* **Caching:** verifiers MAY cache computed CIDs; any new download MUST be re-verified.
+## **A.2 DID Address Helper**
 
-## 
-
-## **A.7 Security Considerations**
-
-* **Redirect/mirror safety:** content identity derives solely from **`artifactDid`**; mirrors/CDNs are acceptable.  
-* **Dynamic content:** SRI manifests cover only listed assets; non-listed dynamic responses are **out of scope** and should be treated as unverified.  
-* **Determinism:** prefer deterministic packaging to avoid unintentional hash churn.  
-* **Keyed proofs:** signatures/SBOM/provenance strengthen trust but do not replace byte-level verification against **`artifactDid`**.  
-* **DID Address semantics**: \`indexAddress(did)\` (see §{\#did-index-address}) is a deterministic \*\*indexing label\*\* for discovery and partitioning, not proof of control. Do \*\*not\*\* interpret it as a signer/owner; never send assets to it. The chance a real EOA equals this address is negligible (≈ 1 / 2^160), and the versioned prefix prevents cross-scheme overlap.
-
-## 
-
-## **A.8 DID Address Helper**
-
-Reference Solidity helper for computing the DID Address from a \`didHash\`:
+Reference Solidity helper for computing the DID Address from a **`didHash`**:
 
 ```
 library DidIndex {
-    /// @notice Compute the DID Address used for EAS recipient or other address-keyed indexes.
-    /// @dev didHash = keccak256(canonicalizeDID(did))
     function toAddress(bytes32 didHash) internal pure returns (address) {
-    	  // The DID Address is the low-order 160 bits of didHash.
         return address(uint160(uint256(didHash)));
     }
 }
 ```
 
-**Safety:** The returned address is an *index label*, not a controller. Never infer control or send assets to it. Always include **`subjectDidHash`** in payloads and verify consistency with the derived **`recipient`**.
+*Note: The returned address is an index label, not a controller. Never infer control or send assets to it.*
 
-## 
-
-## **A.9 Forthcoming Method Registration (informative)**
-
-This appendix will be extracted into a standalone **`did:artifact`** method specification and registered in the W3C DID Spec Registries. The standalone spec will define a minimal DID Document and JSON-LD context (e.g., **`https://w3id.org/did-artifact/v1`**). Until then, this appendix is the normative definition for use within this specification.
-
-## 
-
-## **A.10 Examples (informative)**
+## **A.3 Examples**
 
 **Binary (Windows installer)**
 
@@ -887,6 +793,15 @@ This appendix will be extracted into a standalone **`did:artifact`** method spec
 }
 ```
 
+```
+did:artifact:<cidv1>
+```
+
+* **`<cidv1>`** MUST be CIDv1 encoded with multibase base32-lower.  
+* The CID’s multihash MUST use SHA-256 under this spec version (5.1.3.4.3).  
+* The multicodec SHOULD be **`raw`** for opaque bytes. Using a more specific codec does not change verification semantics.
+
+
 **Website (SRI manifest)**
 
 ```json
@@ -913,13 +828,6 @@ This appendix will be extracted into a standalone **`did:artifact`** method spec
   }
 }
 ```
-
-### 
-
-### **Editor’s note (remove before publishing)**
-
-* Add “See Appendix A.2” references next to **`artifactDid`** mentions in **`dataUrl.platforms`** and **`dataUrl.artifacts`**.  
-* When you create the external repo, move this appendix verbatim, add test vectors, and link back here.
 
 # Appendix B
 

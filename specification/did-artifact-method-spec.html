@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>The did:artifact DID Method</title>
+  <script src="https://www.w3.org/Tools/respec/respec-w3c" class="remove" defer></script>
+  <script class="remove">
+    var respecConfig = {
+      specStatus: "unofficial",
+      shortName: "did-artifact",
+      // TODO(OMA3): fill in editors before submission.
+      editors: [
+        { name: "TODO Editor", company: "OMA3", companyURL: "https://www.oma3.org/" }
+      ],
+      github: "oma3dao/omatrust-docs",
+      edDraftURI: "https://oma3dao.github.io/did-artifact/",
+      latestVersion: "https://oma3dao.github.io/did-artifact/",
+      license: "w3c-software-doc",
+      xref: ["DID-CORE", "INFRA", "URL"],
+      localBiblio: {
+        "DID-CORE": {
+          title: "Decentralized Identifiers (DIDs) v1.0",
+          href: "https://www.w3.org/TR/did-core/",
+          publisher: "W3C",
+          status: "REC"
+        },
+        "DID-RESOLUTION": {
+          title: "Decentralized Identifier Resolution (DID Resolution) v0.3",
+          href: "https://w3c.github.io/did-resolution/",
+          publisher: "W3C"
+        },
+        "DID-SPEC-REGISTRIES": {
+          title: "DID Specification Registries",
+          href: "https://www.w3.org/TR/did-spec-registries/",
+          publisher: "W3C"
+        },
+        "MULTIBASE": {
+          title: "The Multibase Data Format",
+          href: "https://datatracker.ietf.org/doc/draft-multiformats-multibase/",
+          publisher: "IETF"
+        },
+        "MULTIHASH": {
+          title: "The Multihash Data Format",
+          href: "https://datatracker.ietf.org/doc/draft-multiformats-multihash/",
+          publisher: "IETF"
+        },
+        "MULTICODEC": {
+          title: "Multicodec",
+          href: "https://github.com/multiformats/multicodec",
+          publisher: "Multiformats"
+        },
+        "CID": {
+          title: "Content Identifiers (CID)",
+          href: "https://github.com/multiformats/cid",
+          publisher: "Multiformats"
+        },
+        "OCI-IMAGE": {
+          title: "OCI Image Format Specification",
+          href: "https://github.com/opencontainers/image-spec",
+          publisher: "Open Container Initiative"
+        }
+      }
+    };
+  </script>
+</head>
+<body>
+
+<section id="abstract">
+  <p>
+    <code>did:artifact</code> is a Decentralized Identifier (DID) method for naming
+    <em>artifacts</em>&mdash;fixed byte sequences such as files, documents, packages,
+    container images, and proof manifests&mdash;by their content. The method-specific
+    identifier is a <a>CIDv1</a> whose multihash encodes the hash algorithm and digest of
+    the artifact's canonical bytes. Because the identifier is derived solely from the
+    content, a <code>did:artifact</code> DID is <em>self-verifying</em>: any party that
+    obtains candidate bytes can recompute the identifier and confirm, without trusting any
+    resolver, registry, host, or mirror, that the bytes are exactly those the identifier
+    names. The method defines no keys, controllers, or service endpoints; it provides
+    referential identity, and all trust assertions about an artifact are expressed by
+    external attestations that reference the DID.
+  </p>
+</section>
+
+<section id="sotd">
+  <p>
+    This is an unofficial draft prepared for eventual submission to the
+    [[DID-SPEC-REGISTRIES]]. It has not been reviewed or endorsed by W3C or any working
+    group. Two design decisions are flagged inline as <strong>Editorial decisions</strong>
+    and are the most likely points to revise before submission: (1) resolution is
+    <em>generative and offline</em>, and (2) version 1 permits exactly one hash algorithm.
+  </p>
+</section>
+
+<section class="informative">
+  <h2>Introduction</h2>
+  <p>
+    Most DID methods name a <em>subject</em> whose state lives somewhere&mdash;a ledger, a
+    domain, a key&mdash;and resolving the DID means reading that state. Such methods inherit
+    a structural difficulty: [[DID-CORE]] does not define a canonical resolver, and where the
+    underlying registry is not globally deterministic (for example, a web origin that may
+    serve different bytes to different clients or over time), two honest resolvers can return
+    different documents for the same DID with no defined arbiter.
+  </p>
+  <p>
+    <code>did:artifact</code> avoids this entire class of problem by naming content rather
+    than mutable state. The identifier <em>is</em> a cryptographic commitment to a specific
+    byte sequence. There is nothing to look up, so resolution is a pure function of the
+    identifier and is identical for every resolver everywhere. Obtaining the bytes (DID URL
+    dereferencing) may draw from any source&mdash;HTTP, IPFS, a mirror, removable
+    media&mdash;but correctness does not depend on the source being canonical, because the
+    identifier itself is the oracle: recompute it over the fetched bytes and require equality.
+  </p>
+  <p>
+    This makes the method well suited to integrity- and audit-oriented use cases, where the
+    subject of an assertion must be exactly the bytes that were examined. A security audit,
+    for instance, is only ever valid for the precise artifact audited; if a single byte
+    changes, the identifier changes, and the prior assertion no longer applies&mdash;by
+    construction.
+  </p>
+
+  <section>
+    <h3>Relationship to durable identity</h3>
+    <p>
+      <code>did:artifact</code> identifies a single immutable byte revision. It is intended
+      to <em>complement</em>, not replace, a durable subject identifier (for example a
+      <code>did:web</code>, a <code>did:pkh</code>, or an application/plugin DID) that
+      persists across versions and carries reputation and ownership. A typical attestation
+      binds the two: "the artifact <code>did:artifact:…</code> is release 2.3.1 of the
+      application <code>did:web:example.com</code>." Consumers SHOULD NOT treat a
+      <code>did:artifact</code> as a stable identity for an evolving subject.
+    </p>
+  </section>
+
+  <section>
+    <h3>Terminology</h3>
+    <p>
+      This document uses <dfn data-cite="DID-CORE#dfn-did-documents">DID document</dfn>,
+      <dfn data-cite="DID-CORE#dfn-did-resolution">DID resolution</dfn>, and
+      <dfn data-cite="DID-CORE#did-url-dereferencing">DID URL dereferencing</dfn> as defined
+      in [[DID-CORE]].
+    </p>
+    <p>
+      An <dfn>artifact</dfn> is a finite sequence of octets together with a declared
+      <a>artifact type</a> that determines how those octets are derived. A
+      <dfn>CIDv1</dfn> is a self-describing content identifier as specified in [[CID]],
+      composed of a version, a <a data-cite="MULTICODEC">multicodec</a> content-type code,
+      and a <a data-cite="MULTIHASH">multihash</a>. The <dfn>artifact type</dfn> is an
+      out-of-band label, supplied by the referencing context, indicating the procedure used
+      to obtain the artifact's canonical octets (see <a href="#byte-selection"></a>).
+    </p>
+  </section>
+</section>
+
+<section id="conformance">
+  <!-- ReSpec inserts the standard RFC 2119 conformance boilerplate here. -->
+  <p>
+    A conforming <a>resolver</a> is any software that implements the resolution algorithm in
+    <a href="#resolution"></a>. A conforming <a>verifier</a> is any software that implements
+    the verification algorithm in <a href="#verification"></a>.
+  </p>
+</section>
+
+<section>
+  <h2>Method Syntax</h2>
+
+  <section>
+    <h3>Method Name</h3>
+    <p>The method name that identifies this DID method is <code>artifact</code>.</p>
+    <p>
+      A DID that uses this method MUST begin with the prefix <code>did:artifact:</code>. The
+      prefix MUST be in lowercase. The remainder of the DID, the method-specific identifier,
+      is defined below.
+    </p>
+  </section>
+
+  <section>
+    <h3>Method-Specific Identifier</h3>
+    <pre class="abnf">
+did-artifact   = "did:artifact:" artifact-id
+artifact-id    = "b" 1*( base32-lower )    ; multibase-prefixed CIDv1
+base32-lower   = %x61-7A / %x32-37          ; "a"-"z" and "2"-"7"
+    </pre>
+    <p>
+      The <code>artifact-id</code> is a [[CID]] in version 1 form, serialized as a
+      <a data-cite="MULTIBASE">multibase</a> string using the base32 lowercase alphabet,
+      whose leading character is the multibase prefix <code>b</code>.
+    </p>
+  </section>
+
+  <section id="identifier-construction">
+    <h3>Identifier Construction</h3>
+    <p>
+      To remove every degree of freedom that would otherwise allow the same octets to yield
+      more than one identifier, version 1 of this method fixes all CID parameters. An
+      <code>artifact-id</code> MUST be constructed as follows, and a <a>verifier</a> MUST
+      reject any <code>did:artifact</code> value that does not conform:
+    </p>
+    <ol>
+      <li>Obtain the artifact's canonical octets per <a href="#byte-selection"></a>.</li>
+      <li>
+        Compute the <a>multihash</a>: the two-octet prefix <code>0x12 0x20</code>
+        (function code <code>sha2-256</code> = <code>0x12</code>, digest length
+        <code>0x20</code> = 32) followed by the 32-octet SHA-256 digest of the canonical
+        octets.
+      </li>
+      <li>
+        Compute the binary CIDv1: the octet <code>0x01</code> (CID version 1), followed by
+        the multicodec <code>0x55</code> (<code>raw</code>), followed by the multihash from
+        step 2. The total binary CID is 36 octets:
+        <code>0x01 0x55 0x12 0x20 &lt;32-octet digest&gt;</code>.
+      </li>
+      <li>
+        Serialize the binary CID using multibase base32 lowercase and prepend the multibase
+        prefix <code>b</code>. The resulting <code>artifact-id</code> is the prefix
+        <code>b</code> followed by 58 base32 characters.
+      </li>
+      <li>Prepend <code>did:artifact:</code>.</li>
+    </ol>
+    <p>The following constraints are normative and admit no alternatives in this version:</p>
+    <ul>
+      <li>The CID version MUST be 1.</li>
+      <li>The multibase encoding MUST be base32 lowercase (prefix <code>b</code>).</li>
+      <li>The multicodec MUST be <code>raw</code> (<code>0x55</code>).</li>
+      <li>
+        The multihash function MUST be <code>sha2-256</code> (<code>0x12</code>) with a
+        32-octet digest. A verifier MUST read the multihash function code and MUST reject any
+        value whose code is not <code>sha2-256</code> (see <a href="#algorithm-agility"></a>).
+      </li>
+    </ul>
+    <aside class="note" title="Why the multicodec is fixed, not a SHOULD">
+      <p>
+        A CIDv1 encodes its multicodec, so the same octets wrapped with two different
+        content-type codes produce two different CIDs and therefore two different DIDs.
+        Leaving the codec as a recommendation would silently reintroduce the many-to-one
+        mapping that content addressing exists to eliminate. It is therefore a hard
+        requirement.
+      </p>
+    </aside>
+  </section>
+</section>
+
+<section id="byte-selection">
+  <h2>Artifact Byte Selection</h2>
+  <p>
+    The multicodec is always <code>raw</code>, so the CID does not by itself reveal the
+    artifact's type. The <a>artifact type</a> is supplied out of band by the referencing
+    context and determines the procedure used to obtain the canonical octets that are hashed.
+    A <a>verifier</a> MUST apply the procedure for the declared type both when constructing
+    and when verifying an identifier.
+  </p>
+
+  <section>
+    <h3>Opaque octets (binary, installer, archive)</h3>
+    <p>
+      For an artifact of type <code>binary</code>, the canonical octets are the artifact's
+      octets exactly as distributed. No transformation, repacking, normalization, or
+      canonicalization is applied. This is the default and most general case: any finite
+      octet sequence can be named this way.
+    </p>
+  </section>
+
+  <section>
+    <h3>JSON document</h3>
+    <p>
+      For an artifact of type <code>json</code>, the canonical octets are produced by:
+    </p>
+    <ol>
+      <li>Parsing the input as JSON per [[RFC8259]].</li>
+      <li>
+        Rejecting the input as malformed if it contains duplicate object member names,
+        comments, single-quoted strings, <code>NaN</code>, <code>Infinity</code>,
+        <code>-Infinity</code>, trailing commas, or any other non-standard extension.
+      </li>
+      <li>Canonicalizing the parsed value using JCS [[RFC8785]].</li>
+      <li>Encoding the canonical form as UTF-8 octets.</li>
+    </ol>
+    <p>
+      Producers SHOULD avoid IEEE 754 floating-point numbers in artifacts whose identity must
+      be stable across runtimes; where precise numeric values are required they SHOULD be
+      represented as strings or as integers. Producers that embed timestamps or other
+      formatted scalars SHOULD fix their exact lexical form, because JCS canonicalizes JSON
+      structure and number serialization but does not normalize the internal text of string
+      values.
+    </p>
+    <aside class="note" title="JSON value vs. exact file bytes">
+      <p>
+        Naming a JSON document as type <code>json</code> identifies its JSON <em>value</em>
+        independent of serialization. Naming the same file as type <code>binary</code>
+        identifies one exact serialization. These are different artifacts and correctly yield
+        different DIDs; the referencing context declares which intent applies.
+      </p>
+    </aside>
+
+    <section>
+      <h4>Self-reference prohibition</h4>
+      <p>
+        When the artifact is a JSON document, its <code>did:artifact</code> value MUST NOT
+        appear as a member of the object being hashed. Including the identifier inside the
+        hashed octets creates a circular dependency, since the identifier would depend on a
+        field that depends on the identifier. The identifier MUST instead be recorded
+        externally to the document (for example in a distribution record, registry entry,
+        package lockfile, deployment configuration, or attestation).
+      </p>
+    </section>
+  </section>
+
+  <section>
+    <h3>Container image (OCI)</h3>
+    <p>
+      For an artifact of type <code>container</code>, the canonical octets are the OCI image
+      manifest octets (<code>application/vnd.oci.image.manifest.v1+json</code>) as stored in
+      the registry [[OCI-IMAGE]]. Because the manifest is JSON, producers and verifiers MUST
+      apply the type <code>json</code> procedure above to those manifest octets. The manifest
+      already commits, by digest, to the image's layers and configuration, so naming the
+      manifest transitively names the image.
+    </p>
+  </section>
+
+  <section>
+    <h3>Website proof artifacts</h3>
+    <p>
+      A live website is not a fixed octet sequence and cannot be named directly; instead a
+      <em>proof artifact</em> derived from it is named. This version defines two, each a
+      distinct artifact yielding a distinct DID.
+    </p>
+    <p>
+      For type <code>website-sri</code>, the canonical octets are those of a Subresource
+      Integrity manifest [[SRI]] expressed as JSON and processed by the type
+      <code>json</code> procedure. Such a manifest commits only to the assets it lists;
+      dynamic or unlisted responses are out of scope and MUST be treated as unverified.
+    </p>
+    <p>
+      For type <code>website-snapshot</code>, the canonical octets are those of a
+      deterministic archive of the captured content (for example, with fixed entry ordering
+      and fixed owner, mode, and timestamp metadata), processed as type <code>binary</code>.
+      Producers SHOULD use deterministic packaging; non-deterministic archives of identical
+      content will yield differing identifiers.
+    </p>
+    <aside class="note" title="Declaration scope">
+      <p>
+        A website proof artifact identifies the proof, not the running site. Attestations
+        referencing such an identifier assert only that the listed or captured content
+        matches; consumers MUST NOT read a stronger guarantee into them.
+      </p>
+    </aside>
+  </section>
+</section>
+
+<section>
+  <h2>CRUD Operations</h2>
+
+  <section>
+    <h3>Create</h3>
+    <p>
+      Creation is purely generative and requires no registration, ledger write, or network
+      interaction. A controller creates a <code>did:artifact</code> DID by performing the
+      construction in <a href="#identifier-construction"></a> over the artifact's canonical
+      octets. The DID exists for any octet sequence; there is no notion of an unregistered or
+      not-yet-created <code>did:artifact</code>.
+    </p>
+  </section>
+
+  <section id="resolution">
+    <h3>Read (Resolve)</h3>
+    <aside class="note" title="Editorial decision: generative, offline resolution">
+      <p>
+        This method resolves <em>generatively and offline</em>: the DID document is a pure
+        function of the identifier, computed without fetching the artifact bytes. The bytes
+        are a <em>resource</em> obtained by dereferencing (<a href="#dereferencing"></a>),
+        which is a distinct operation from resolution. This mirrors the generative model used
+        by other parameterized methods and is the primary point to revisit if reviewers
+        prefer a different resolution shape.
+      </p>
+    </aside>
+    <p>To resolve a <code>did:artifact</code> DID, a <a>resolver</a> MUST:</p>
+    <ol>
+      <li>
+        Verify that the DID matches the syntax in <a href="#identifier-construction"></a>,
+        including the fixed CID version, multibase, multicodec, and multihash function. If it
+        does not, return a resolution error <code>invalidDid</code>.
+      </li>
+      <li>
+        Construct and return the minimal DID document (<a href="#did-document"></a>). The
+        resolver MUST NOT fetch the artifact, contact any network service, or consult any
+        registry. Resolution therefore always succeeds for a syntactically valid DID and is
+        byte-identical across all conforming resolvers.
+      </li>
+    </ol>
+
+    <section id="did-document">
+      <h4>The DID document</h4>
+      <p>The DID document for a <code>did:artifact</code> DID is exactly:</p>
+      <pre class="json example" title="Minimal DID document">
+{
+  "@context": "https://www.w3.org/ns/did/v1",
+  "id": "did:artifact:b<cidv1>"
+}
+      </pre>
+      <p>
+        The document MUST contain only the <code>@context</code> and <code>id</code>
+        properties. A resolver MUST NOT add <code>verificationMethod</code>,
+        <code>authentication</code>, any other verification relationship, or
+        <code>service</code> entries.
+      </p>
+      <aside class="note" title="Referential, self-verifying identity">
+        <p>
+          A content hash encodes no key and no controller, so there is nothing to
+          authenticate <em>as</em> a <code>did:artifact</code> and no operation a controller
+          could authorize. The absence of verification relationships is intentional: this
+          method provides referential identity only. All trust assertions about an artifact
+          (provenance, audit results, publisher binding) are made by external attestations
+          that reference the DID, never by the DID document itself.
+        </p>
+      </aside>
+    </section>
+
+    <section>
+      <h4>Resolution metadata</h4>
+      <p>
+        A resolver SHOULD return, in the DID resolution metadata, the decoded parameters of
+        the identifier as a convenience to callers: the multihash function name
+        (<code>sha2-256</code>), the 32-octet digest as lowercase hexadecimal, the multicodec
+        name (<code>raw</code>), and the CID version. These values are derived entirely from
+        the DID and add no information not already present in it.
+      </p>
+    </section>
+  </section>
+
+  <section>
+    <h3>Update</h3>
+    <p>
+      Update is not supported and MUST be treated as unsupported. A
+      <code>did:artifact</code> DID is immutable: its document is fixed by the identifier, and
+      any change to the artifact's octets produces a different DID rather than a new state of
+      the same DID.
+    </p>
+  </section>
+
+  <section>
+    <h3>Deactivate</h3>
+    <p>
+      Deactivation is not supported and MUST be treated as unsupported. There is no mutable
+      state to deactivate. Whether a given artifact can still be retrieved is a property of
+      hosting and dereferencing, not of the DID.
+    </p>
+  </section>
+</section>
+
+<section id="dereferencing">
+  <h2>Dereferencing and Verification</h2>
+
+  <section>
+    <h3>Dereferencing</h3>
+    <p>
+      Dereferencing obtains the artifact octets named by a <code>did:artifact</code> DID.
+      Unlike resolution, dereferencing requires a source of bytes, which may be any location:
+      HTTP(S), an <code>ipfs://</code> address, a content-delivery mirror, local storage, or
+      removable media. The referencing context typically supplies one or more candidate
+      locations; these locations are advisory for discovery and distribution only and confer
+      no trust.
+    </p>
+  </section>
+
+  <section id="verification">
+    <h3>Verification</h3>
+    <p>To verify candidate octets against a <code>did:artifact</code> DID, a <a>verifier</a> MUST:</p>
+    <ol>
+      <li>
+        Determine the declared <a>artifact type</a> from the referencing context and apply
+        the corresponding procedure in <a href="#byte-selection"></a> to derive canonical
+        octets from the candidate bytes. For type <code>binary</code> this is the identity
+        transformation; for type <code>json</code> (and the JSON-based types) the verifier
+        MUST re-apply JCS canonicalization, because bytes in transit may have been
+        re-serialized.
+      </li>
+      <li>
+        Recompute the <code>artifact-id</code> over the canonical octets per
+        <a href="#identifier-construction"></a>.
+      </li>
+      <li>
+        Require exact equality with the referenced <code>artifact-id</code>. If the values
+        differ, the candidate octets are invalid for this DID and MUST be rejected,
+        regardless of the location they were fetched from or any signature that accompanied
+        them.
+      </li>
+    </ol>
+    <p>
+      A verifier MAY cache the outcome of a successful verification keyed by the DID, but any
+      newly obtained octets MUST be re-verified before use.
+    </p>
+  </section>
+
+  <section id="resolver-determinism" class="informative">
+    <h3>Resolver determinism</h3>
+    <p>
+      [[DID-CORE]] does not designate a canonical resolver for any DID, and resolver
+      multiplexers route to per-method drivers without acting as an authority. For methods
+      whose verifiable data registry is not globally deterministic, two correct resolvers can
+      legitimately return different documents for the same DID, with no defined arbiter.
+    </p>
+    <p>
+      This method is not subject to that ambiguity. Resolution is a pure function of the
+      identifier with no input other than the DID string, so there exists no input that could
+      cause two conforming resolvers to differ; the absence of a canonical resolver is
+      therefore immaterial. Dereferencing may draw bytes from many non-canonical sources, but
+      the identifier is itself the criterion of correctness: any source that returns matching
+      octets is acceptable, and any source that does not is rejected. Correctness does not
+      depend on the trustworthiness of any resolver, registry, host, or mirror.
+    </p>
+  </section>
+</section>
+
+<section>
+  <h2>Versioning and Algorithm Agility</h2>
+  <section id="algorithm-agility">
+    <h3>Single algorithm in version 1</h3>
+    <aside class="note" title="Editorial decision: one algorithm">
+      <p>
+        Permitting multiple hash algorithms would let the same octets map to several valid
+        identifiers, defeating the one-to-one property that gives content addressing its
+        value. Version 1 therefore fixes a single algorithm. This is a deliberate trade of
+        agility for determinism and is a flagged point for review.
+      </p>
+    </aside>
+    <p>
+      Under this version, the multihash function MUST be <code>sha2-256</code>, and verifiers
+      MUST reject identifiers using any other function code even though the multihash format
+      is self-describing. The function code is retained in the encoding so that a future
+      version of this specification MAY expand the accepted set without changing the
+      identifier format.
+    </p>
+    <p>
+      Because a digest under a different algorithm is a different identifier for the same
+      octets, algorithm migration is additive: introducing a new algorithm mints new DIDs
+      alongside existing ones rather than altering any existing DID. Grouping the multiple
+      identifiers that name the same logical artifact across algorithms or representations is
+      out of scope for this method and is expected to be handled by the referencing
+      application layer.
+    </p>
+  </section>
+</section>
+
+<section class="informative">
+  <h2>Security Considerations</h2>
+  <ul>
+    <li>
+      <strong>Self-verification, not trusted retrieval.</strong> Security derives from
+      recomputing the identifier over obtained octets, never from the URL, host, mirror, or
+      any accompanying signature. Mirrors and CDNs are acceptable precisely because they
+      cannot alter content identity without detection.
+    </li>
+    <li>
+      <strong>Hash strength.</strong> The integrity guarantee rests on the
+      collision and second-preimage resistance of SHA-256. Should that assurance weaken, a
+      future version introduces a stronger algorithm; existing identifiers remain valid only
+      to the extent the underlying function remains sound.
+    </li>
+    <li>
+      <strong>Type confusion.</strong> The same file named as type <code>json</code> versus
+      type <code>binary</code> yields different identifiers. The referencing context MUST
+      declare the intended type unambiguously, and verifiers MUST apply the declared type, to
+      prevent an attacker from substituting one interpretation for another.
+    </li>
+    <li>
+      <strong>Partial and dynamic coverage.</strong> Website SRI manifests commit only to
+      listed assets; snapshots commit only to captured bytes. Neither covers dynamic
+      server-side behavior. Consumers MUST NOT infer behavioral guarantees from a
+      content-addressed website proof.
+    </li>
+    <li>
+      <strong>Packaging determinism.</strong> Archive and container manifest producers MUST
+      use deterministic packaging; otherwise identical content yields differing identifiers
+      and verification fails for honest parties.
+    </li>
+    <li>
+      <strong>Referential only.</strong> A <code>did:artifact</code> asserts nothing about an
+      artifact's safety, provenance, or fitness. Such properties are conveyed solely by
+      external attestations referencing the DID, and consumers MUST evaluate those
+      attestations under their own trust policy.
+    </li>
+    <li>
+      <strong>Self-reference.</strong> Embedding a JSON artifact's own identifier inside the
+      hashed object is prohibited; implementations that ignore this will produce
+      non-reproducible identifiers.
+    </li>
+  </ul>
+</section>
+
+<section class="informative">
+  <h2>Privacy Considerations</h2>
+  <ul>
+    <li>
+      <strong>Offline resolution does not phone home.</strong> Because resolution is
+      generative, resolving a <code>did:artifact</code> reveals nothing to any third party,
+      unlike methods whose resolution contacts a domain or ledger. Network exposure occurs
+      only at dereferencing time and only toward the chosen byte source.
+    </li>
+    <li>
+      <strong>Confirmation of known content.</strong> A <code>did:artifact</code> is a hash
+      of content. Anyone holding a candidate artifact can confirm whether it matches a given
+      DID, and a DID over low-entropy or publicly known content can be reproduced by anyone.
+      The identifier therefore should not be treated as concealing the existence or
+      possession of the named content.
+    </li>
+    <li>
+      <strong>Content may carry personal data.</strong> The identifier contains no personal
+      data, but the named artifact might. Publishing a DID may correlate parties who possess
+      the same artifact and may make a sensitive artifact's existence detectable to anyone who
+      can guess or obtain its bytes.
+    </li>
+    <li>
+      <strong>Immutability.</strong> A <code>did:artifact</code> cannot be updated or
+      deactivated. Erasure obligations, where they apply, must be met at the hosting and
+      attestation layers, since the identifier itself is a permanent commitment to the
+      content.
+    </li>
+  </ul>
+</section>
+
+<section class="appendix informative">
+  <h2>DID Specification Registries entry (stub)</h2>
+  <p>The following is a draft entry for submission to the [[DID-SPEC-REGISTRIES]].</p>
+  <table class="simple">
+    <tbody>
+      <tr><th>Method Name</th><td><code>artifact</code></td></tr>
+      <tr><th>Status</th><td>Provisional</td></tr>
+      <tr><th>Specification</th><td>This document</td></tr>
+      <tr><th>Contact</th><td>OMA3 (TODO: contact address)</td></tr>
+      <tr><th>Verifiable Data Registry</th><td>None (generative; identifier derived from content)</td></tr>
+      <tr><th>Supports Update</th><td>No</td></tr>
+      <tr><th>Supports Deactivate</th><td>No</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="appendix informative">
+  <h2>Test vectors (to be supplied)</h2>
+  <p>
+    Before submission, this appendix MUST be populated with worked vectors covering, at
+    minimum: an opaque binary; a JSON document exercising member-name ordering, number
+    minimization, and UTF-8 escaping under JCS; an OCI manifest; and an SRI manifest. Each
+    vector should give the input, the canonical octets (hex), the SHA-256 digest (hex), the
+    binary CID (hex), and the final <code>did:artifact</code> string, verified to agree across
+    at least two independent runtimes.
+  </p>
+</section>
+
+</body>
+</html>
