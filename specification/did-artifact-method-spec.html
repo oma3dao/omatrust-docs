@@ -6,7 +6,7 @@
   <script src="https://www.w3.org/Tools/respec/respec-w3c" class="remove" defer></script>
   <script class="remove">
     var respecConfig = {
-      specStatus: "ED",
+      specStatus: "unofficial",
       shortName: "did-artifact",
       // TODO(OMA3): fill in editors before submission.
       editors: [
@@ -83,7 +83,7 @@
 
 <section id="sotd">
   <p>
-    This document is an Editor's Draft produced by
+    This document is produced by
     <a href="https://www.oma3.org/">OMA3</a> as part of its standardization process. It has
     not yet been ratified by OMA3 membership and is subject to change. Two design decisions
     are flagged inline as <strong>Editorial decisions</strong> and are the most likely points
@@ -108,8 +108,9 @@
   <p>
     <code>did:artifact</code> avoids this entire class of problem by naming content rather
     than mutable state. The identifier <em>is</em> a cryptographic commitment to a specific
-    byte sequence. There is nothing to look up, so resolution is a pure function of the
-    identifier and is identical for every resolver everywhere. Obtaining the bytes (DID URL
+    byte sequence. There is nothing to look up, so the authoritative content of resolution is
+    a pure function of the identifier and is identical for every resolver everywhere.
+    Obtaining the bytes (DID URL
     dereferencing) may draw from any source&mdash;HTTP, IPFS, a mirror, removable
     media&mdash;but correctness does not depend on the source being canonical, because the
     identifier itself is the oracle: recompute it over the fetched bytes and require equality.
@@ -396,8 +397,8 @@ base32-lower   = %x61-7A / %x32-37          ; "a"-"z" and "2"-"7"
       <li>
         Construct and return the minimal DID document (<a href="#did-document"></a>). The
         resolver MUST NOT fetch the artifact, contact any network service, or consult any
-        registry. Resolution therefore always succeeds for a syntactically valid DID and is
-        byte-identical across all conforming resolvers.
+        registry. Resolution therefore always succeeds for a syntactically valid DID; the
+        authoritative content of the document is identical across all conforming resolvers.
       </li>
     </ol>
 
@@ -411,10 +412,13 @@ base32-lower   = %x61-7A / %x32-37          ; "a"-"z" and "2"-"7"
 }
       </pre>
       <p>
-        The document MUST contain the <code>@context</code> and <code>id</code>
-        properties. A resolver MUST NOT add <code>verificationMethod</code>,
-        <code>authentication</code>, any other verification relationship, or
-        <code>service</code> entries other than those defined below.
+        The <em>authoritative</em> content of the DID document is exactly the
+        <code>@context</code> and <code>id</code> properties; these are derived solely from
+        the identifier and constitute the verified document. A resolver MUST NOT add
+        <code>verificationMethod</code>, <code>authentication</code>, or any other
+        verification relationship. A resolver MAY add non-authoritative <code>service</code>
+        entries as defined below; such entries are advisory only, are not part of the
+        verified document, and MUST NOT be relied upon for any trust decision.
       </p>
 
       <h5>Optional artifact URL</h5>
@@ -541,13 +545,19 @@ base32-lower   = %x61-7A / %x32-37          ; "a"-"z" and "2"-"7"
       legitimately return different documents for the same DID, with no defined arbiter.
     </p>
     <p>
-      This method is not subject to that ambiguity. Resolution is a pure function of the
-      identifier with no input other than the DID string, so there exists no input that could
-      cause two conforming resolvers to differ; the absence of a canonical resolver is
-      therefore immaterial. Dereferencing may draw bytes from many non-canonical sources, but
-      the identifier is itself the criterion of correctness: any source that returns matching
-      octets is acceptable, and any source that does not is rejected. Correctness does not
-      depend on the trustworthiness of any resolver, registry, host, or mirror.
+      This method is not subject to that ambiguity, because its correctness does not depend
+      on resolvers agreeing. The authoritative content of the DID document&mdash;its
+      <code>@context</code> and <code>id</code>&mdash;is a pure function of the identifier
+      and is therefore identical from every conforming resolver. Resolvers MAY additionally
+      return non-authoritative advisory fields, such as <code>ArtifactSource</code> service
+      hints, and these MAY differ between resolvers; because such fields carry no trust and
+      are never relied upon, their variation cannot affect any outcome. Correctness derives
+      solely from dereferencing candidate bytes and verifying them against the identifier
+      (see <a href="#verification"></a>): any source returning matching octets is acceptable,
+      any other is rejected, and no resolver, registry, host, or mirror need be trusted. The
+      contrast with lookup-based methods is therefore not that this method's documents are
+      byte-identical, but that nothing <em>authoritative</em> can differ&mdash;the authority
+      is the hash, not the resolver.
     </p>
   </section>
 </section>
