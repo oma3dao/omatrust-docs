@@ -12,12 +12,11 @@ OMATrust is a decentralized verification protocol that enables developers, audit
 ## Core Documents
 
 - **[Whitepaper](./whitepaper/omatrust-whitepaper.md)** - Vision, architecture, and economic model
-- **[Specification](./specification/omatrust-specification.md)** - Complete technical specification for OMATrust protocol
-- **[PDF Releases](./releases/)** - Downloadable PDF versions of all documents
-
-## Document Management
-
-- **[Document Workflow Guide](./DOCUMENT_WORKFLOW.md)** - Complete process for managing documents from Google Docs to GitHub
+- **Specification** - Technical specification for OMATrust protocol
+  - [Identity](./specification/omatrust-specification-identity.md)
+  - [Reputation](./specification/omatrust-specification-reputation.md)
+  - [Proofs](./specification/omatrust-specification-proofs.md)
+- **[DID Artifact Method Spec](./specification/did-artifact-method-spec.html)** - W3C-format DID method specification
 
 ## Repository Ecosystem
 
