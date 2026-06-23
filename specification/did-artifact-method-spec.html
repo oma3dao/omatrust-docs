@@ -582,6 +582,15 @@ base32-lower   = %x61-7A / %x32-37          ; "a"-"z" and "2"-"7"
       identifier format.
     </p>
     <p>
+      The security requirement for <code>did:artifact</code> is that it be computationally
+      infeasible to find either (a) different canonical bytes for a known artifact identifier
+      (second-preimage resistance), or (b) two distinct canonical artifacts that produce the
+      same identifier (collision resistance). Version 1 uses SHA-256, which provides
+      approximately 128-bit collision resistance and 256-bit preimage/second-preimage
+      resistance under current cryptanalytic understanding. This is sufficient for artifact
+      identity, while preserving compatibility with existing CID and multihash tooling.
+    </p>
+    <p>
       Because a digest under a different algorithm is a different identifier for the same
       octets, algorithm migration is additive: introducing a new algorithm mints new DIDs
       alongside existing ones rather than altering any existing DID. Grouping the multiple
