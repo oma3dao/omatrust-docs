@@ -737,6 +737,7 @@ This approach balances decentralized publishing with user trust, enabling permis
 | 0.81 | 2026-04-10 | Limit DID Address to EVM-specific sections. |
 | 0.82 | 2026-04-23 | Change definition of DID Address to strip www subdomains. |
 | 0.83 | 2026-06-20 | Move did:artifact into separate spec. |
+| 0.84 | 2026-06-23 | Complete Appendix D with hashes. |
 
 # Appendix A
 
@@ -914,13 +915,13 @@ This appendix captures design intent for website verification to be finalized in
 
 ## Example Test Vectors for Canonicalization+Hashing
 
-This appendix provides example test vectors to guide implementers in ensuring correct canonicalization and hashing of JSON data for the **`dataHash`** field. Implementers SHOULD compute hashes using the algorithm specified in **`dataHashAlgorithm`** (e.g., sha256 or keccak256) and verify consistency across runtimes (e.g., Node.js, Python, Solidity). Clients may use these vectors to validate their implementations. Additional vectors should be published by implementers to cover edge cases.
+The following test vectors were generated using JCS (RFC 8785\) canonicalization followed by UTF-8 encoding and hashing. Hashes are 0x-prefixed hex. Both keccak256 and sha256 columns are provided; implementers should verify against the algorithm specified in their dataHashAlgorithm field.
 
-| Input JSON | Canonicalized JSON | Expected Hash (Compute per dataHashAlgorithm) |
-| ----- | ----- | ----- |
-| {"a": 1.0, "b": {"c": "\\n"}} | {"a":1,"b":{"c":"\\n"}} | \[Compute Hash\] |
-| {"b":2,"a":1} | {"a":1,"b":2} | \[Compute Hash\] |
-| {"x":\[{"y":true}\]} | {"x":\[{"y":true}\]} | \[Compute Hash\] |
+| Input JSON | Canonicalized JSON | keccak256 Hash | sha256 Hash |
+| ----- | ----- | ----- | ----- |
+| {"a": 1.0, "b": {"c": "\\n"}} | {"a":1,"b":{"c":"\\n"}} | 0x272619e60fdf0b8408352a24263ab5bd43e5c3873828556737960144deb08639 | 0xa14a36c545cf0d9cd10a13680775cb5b3c5e17d2d426c5a54b8af1d2d17d5351 |
+| {"b":2,"a":1} | {"a":1,"b":2} | 0xb8ffb64722137f4b100665a52e3c943f8066e8ab8ba3b427e6f4b404defd82b0 | 0x43258cff783fe7036d8a43033f830adfc60ec037382473548ac742b888292777 |
+| {"x":\[{"y":true}\]} | {"x":\[{"y":true}\]} | 0x2645502e6bc76dd669aa0e22c68b99defe44dd5479159445656a693e57764097 | 0x01f868b03ac751f2fd0e87fbea94e729866312f476e8fe029c8959e94acd6889 |
 
 # Appendix E
 
