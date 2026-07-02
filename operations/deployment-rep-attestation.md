@@ -118,11 +118,11 @@ See [deployment-model.md](./deployment-model.md#9-security) for the shared secur
 
 ### Signing Addresses
 
-| Vercel Environment | Signing Address    |
-|--------------------|--------------------|
-| Production         | `0x...` (Thirdweb) |
-| public-test        | `0x...` (Thirdweb) |
-| Development        | `0x...`            |
+| Vercel Environment | Signing Address                                | Source          |
+|--------------------|------------------------------------------------|-----------------|
+| Production         | `0x96fa5ab5E519641bD8A840A6b26D17DB7497618b`   | Thirdweb Wallet |
+| public-test        | `0x6f05D46cD048d3249F4Db6BAd6d06e2069BCD5eb`   | Thirdweb Wallet |
+| Development        | TBD (env var once devnet is up)                | `EAS_DELEGATE_PRIVATE_KEY` |
 
 ---
 
