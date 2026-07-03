@@ -308,11 +308,10 @@ Only the active chain variable is needed (see Section 3). Optional domain overri
 
 ### Signing Addresses
 
-| Vercel Environment | Signing Address                              |
-|--------------------|----------------------------------------------|
-| Production         | `0x...` (Thirdweb Server Wallet — mainnet)   |
-| public-test        | `0x...` (Thirdweb Server Wallet — testnet)   |
-| Development        | `0x...` (raw key — devnet)                   |
+The canonical list of trusted signing wallets is maintained in [`omatrust-backend/src/lib/routes/public/trust-anchors.ts`](https://github.com/oma3dao/omatrust-backend/blob/main/src/lib/routes/public/trust-anchors.ts). Refer to that file for current addresses rather than duplicating them here.
+
+- **Production / public-test** — Thirdweb Server Wallets (`APPROVED_ISSUERS`)
+- **Development / Preview** — derived from `EAS_DELEGATE_PRIVATE_KEY` (`APPROVED_TEST_ISSUERS`)
 
 ### Thirdweb Secret Key Rotation (frequent)
 
@@ -343,7 +342,6 @@ Only needed if the wallet is compromised or being replaced.
 | 4   | `app-registry-evm-solidity/contract-addresses.txt`                       | Wallet address if recorded there                       |
 | 5   | Vercel env vars (`THIRDWEB_SERVER_WALLET_ADDRESS`)                       | All projects, applicable environments                  |
 | 6   | On-chain issuer (if wallet is an authorized resolver issuer)             | Timelock proposal: remove old + add new via `oma3-ops` |
-| 7   | This document (Signing Addresses table above)                            | Update address                                         |
 
 4. Redeploy affected services
 5. If the old wallet was an on-chain issuer, submit timelock proposals to remove old and add new (see `oma3-ops` admin scripts)
@@ -354,5 +352,4 @@ Only needed if the wallet is compromised or being replaced.
 2. Update `EAS_DELEGATE_PRIVATE_KEY` in Vercel
 3. Redeploy
 4. Update `APPROVED_TEST_ISSUERS` in `omatrust-backend/src/lib/routes/public/trust-anchors.ts`
-5. Update this document (Signing Addresses table)
 
