@@ -6,14 +6,69 @@ Operational runbook for deploying and configuring the Vercel projects that make 
 
 ---
 
-## 1. Projects Covered
+## 1. Step-by-Step Deployment Guide
 
-| # | Project                    | Domain                  | Role                                     |
-|---|----------------------------|-------------------------|------------------------------------------|
-| 1 | `rep-attestation-frontend` | `app.omatrust.org`      | Portal — attestation creation & verification |
-| 2 | `omatrust-backend`         | `backend.omatrust.org`  | APIs — auth, accounts, relay, RPC proxy  |
-| 3 | `omatrust-widgets`         | `widgets.omatrust.org`  | Embeddable review widget (iframe)        |
-| 4 | `omatrust-api-gateway`     | `api.omatrust.org`      | Edge proxy — public `/v1/*` API surface  |
+### Projects Covered
+
+| # | Project                    | Domain                  | Role                                         |
+|---|----------------------------|-------------------------|----------------------------------------------|
+| 1 | `omatrust-backend`         | `backend.omatrust.org`  | APIs — auth, accounts, relay, RPC proxy      |
+| 2 | `omatrust-api-gateway`     | `api.omatrust.org`      | Edge proxy — public `/v1/*` API surface      |
+| 3 | `omatrust-widgets`         | `widgets.omatrust.org`  | Embeddable review widget (iframe)            |
+| 4 | `rep-attestation-frontend` | `app.omatrust.org`      | Portal — attestation creation & verification |
+
+### Phase A: On-chain Deployment
+
+Complete these before configuring any Vercel environments. For detailed instructions, see [`app-registry-evm-solidity/tasks/deploy/README.md`](https://github.com/oma3dao/app-registry-evm-solidity/blob/main/tasks/deploy/README.md).
+
+1. Deploy TimelockController
+2. Deploy EAS and SchemaRegistry
+3. Register reputation schemas (all 7) → see [`rep-attestation-tools-evm-solidity` README](https://github.com/oma3dao/rep-attestation-tools-evm-solidity)
+4. Configure server wallet as authorized issuer (timelock proposal, 5-day delay)
+5. Fund server wallet with OMA for gas
+
+### Phase B: Backend (`omatrust-backend`)
+
+See the [repo README](https://github.com/oma3dao/omatrust-backend/blob/main/README.md) for Supabase setup, architecture, and local development. This section covers the deployment-specific settings.
+
+6. Create Vercel environments following the common pattern (Section 4)
+7. Set common env vars (Section 3) + project-specific vars (Section 6)
+8. Configure domains per Section 6
+9. Deploy and verify health endpoint
+
+### Phase C: API Gateway (`omatrust-api-gateway`)
+
+See the [repo README](https://github.com/oma3dao/omatrust-api-gateway/blob/main/README.md) for route architecture, adding new routes, and local testing.
+
+10. Create Vercel environments following the common pattern (Section 4)
+11. Set active chain variable (Section 3) — no secrets needed
+12. Configure domains per Section 8
+13. Deploy and verify proxy routing
+
+### Phase D: Widgets (`omatrust-widgets`)
+
+See the [repo README](https://github.com/oma3dao/omatrust-widgets/blob/main/README.md) for widget architecture, embed integration, and local development (note: uses `pnpm`, not `npm`).
+
+14. Create Vercel environments following the common pattern (Section 4)
+15. Set common env vars (Section 3) + project-specific vars (Section 7)
+16. Configure domains per Section 7
+17. Deploy
+
+### Phase E: Frontend (`rep-attestation-frontend`)
+
+See the [repo README](https://github.com/oma3dao/rep-attestation-frontend/blob/main/README.md) for local development, build, and schema management workflow.
+
+18. Create Vercel environments following the common pattern (Section 4)
+19. Set common env vars (Section 3) + project-specific vars (Section 5)
+20. Configure domains per Section 5
+21. Deploy
+
+### Phase F: Verification
+
+22. End-to-end attestation flow on mainnet (create + verify)
+23. Verify domain routing for all environments (mainnet, testnet, devnet)
+24. Verify delegated attestation signing (Thirdweb server wallet on prod/test, raw key on dev/preview)
+25. Remove pre-mainnet 302 redirects (see "At Mainnet Launch" in Section 2)
 
 ---
 
@@ -21,8 +76,8 @@ Operational runbook for deploying and configuring the Vercel projects that make 
 
 Multiple projects (`rep-attestation-frontend`, `omatrust-api-gateway`) use a `CHAIN_PREFIX_MAP` in code to derive full service URLs from base domains. The active chain determines the subdomain prefix:
 
-| Active Chain       | Prefix   | Example                        |
-|--------------------|----------|--------------------------------|
+| Active Chain       | Prefix  | Example                        |
+|--------------------|---------|--------------------------------|
 | `omachain-mainnet` | (none)  | `backend.omatrust.org`         |
 | `omachain-testnet` | `test.` | `test.backend.omatrust.org`    |
 | `omachain-devnet`  | `dev.`  | `dev.backend.omatrust.org`     |
@@ -66,8 +121,8 @@ Every project has an active chain variable. The name differs between Next.js fro
 |----------------------------|----------------------------|
 | `rep-attestation-frontend` | `NEXT_PUBLIC_ACTIVE_CHAIN` |
 | `omatrust-widgets`         | `NEXT_PUBLIC_ACTIVE_CHAIN` |
-| `omatrust-backend`         | `OMATRUST_ACTIVE_CHAIN`   |
-| `omatrust-api-gateway`     | `OMATRUST_ACTIVE_CHAIN`   |
+| `omatrust-backend`         | `OMATRUST_ACTIVE_CHAIN`    |
+| `omatrust-api-gateway`     | `OMATRUST_ACTIVE_CHAIN`    |
 
 | Vercel Environment | Value              |
 |--------------------|--------------------|
@@ -111,6 +166,10 @@ The code checks `THIRDWEB_SECRET_KEY` + `THIRDWEB_SERVER_WALLET_ADDRESS` first. 
 
 All projects follow the same Vercel environment structure. The pattern below applies to every project unless its per-project section notes otherwise.
 
+### Build Machine
+
+Use **Standard** (smallest tier) for all projects. None of these builds require extra CPU or memory — they're straightforward Next.js/TypeScript compilations. Avoid Elastic unless build parallelism becomes a bottleneck.
+
 ### Preview Phase (Current)
 
 | Setting          | public-test                       | Preview                 | Production                           |
@@ -118,16 +177,16 @@ All projects follow the same Vercel environment structure. The pattern below app
 | Type             | Custom                            | Built-in                | Built-in                             |
 | Branch Tracking  | ON → `staging`                    | ON → all branches       | ON → `main`                          |
 | Deployment       | Auto-deploy on push to `staging`  | Auto on PR              | Auto (302 redirect, app doesn't run) |
-| Domain           | `preview.<domain>`                | (Vercel auto-generated) | `<domain>` → 302 redirect           |
+| Domain           | `preview.<domain>`                | (Vercel auto-generated) | `<domain>` → 302 redirect            |
 
 ### Target State (Post-Mainnet)
 
-| Setting          | Production              | public-test              | Development              | Preview                 |
-|------------------|-------------------------|--------------------------|--------------------------|-------------------------|
-| Type             | Built-in                | Custom                   | Built-in                 | Built-in                |
-| Branch Tracking  | ON → `main`            | OFF                       | ON → `staging`           | ON → all branches       |
-| Deployment       | Auto on merge to `main`| Manual promotion only     | Auto on merge to `staging`| Auto on PR             |
-| Domain           | `<domain>`             | `test.<domain>`           | `dev.<domain>`           | (Vercel auto-generated) |
+| Setting          | Production              | public-test              | Development               | Preview                 |
+|------------------|-------------------------|--------------------------|---------------------------|-------------------------|
+| Type             | Built-in                | Custom                   | Built-in                  | Built-in                |
+| Branch Tracking  | ON → `main`             | OFF                      | ON → `staging`            | ON → all branches       |
+| Deployment       | Auto on merge to `main` | Manual promotion only    | Auto on merge to `staging`| Auto on PR              |
+| Domain           | `<domain>`              | `test.<domain>`          | `dev.<domain>`            | (Vercel auto-generated) |
 
 ### Common Transition Steps (per project)
 
@@ -225,7 +284,7 @@ These are in addition to the common variables in Section 3.
 
 - The backend shares `THIRDWEB_SECRET_KEY` rotation timing with `rep-attestation-frontend` — rotate both simultaneously during the maintenance window (see Section 8).
 - Supabase and Stripe credentials are per-environment. Production should use separate Supabase projects from testnet/devnet.
-- `OMATRUST_SESSION_SECRET` must be unique per environment and should never be shared across environments.
+- `OMATRUST_SESSION_SECRET` must be unique per environment and should never be shared across environments. Generate with `openssl rand -base64 32`.
 
 ---
 
@@ -331,7 +390,7 @@ The `THIRDWEB_SECRET_KEY` authenticates API access to the Thirdweb project. It d
 Only needed if the wallet is compromised or being replaced.
 
 1. Create new server wallet in Thirdweb dashboard
-2. Fund new wallet with OMA (see [funding guide](../../oma3-ops/docs/funding-omachain-wallets.md))
+2. Fund new wallet with OMA (bridge from Ethereum mainnet → transfer to wallet address; see [funding guide](https://github.com/oma3dao/oma3-ops/blob/main/docs/funding-omachain-wallets.md))
 3. Update all downstream references:
 
 | #   | File / Location                                                          | What to update                                         |
