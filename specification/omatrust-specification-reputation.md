@@ -226,6 +226,7 @@ A Linked Identifier attestation MUST conform to the following structure.  The no
 | subject | Y | string | Subject ID. DID of the subject (such as **`did:pkh`** for contract addresses or **`did:web`** for web domains) that is claimed to control the linked identifier.  This SHOULD be the DID the clients will most often search for (see below) |
 | linkedId | Y | string | Linked Identifier. The Controller identifier being claimed as controlled by the subject (e.g., a **`did:web`**, **`did:handle`**).  |
 | revoked | N | bool | Indicates if this linked identifier attestation has been revoked. |
+| revokedAt | N | integer | Unix timestamp (in seconds) of the revocation |
 | proofs | N | \[object\] | Required if **`method`** \= **`proof`** or **`social-post`**.  Each entry MUST be a Proof wrapper. Proof wrapper schema and **`proofType`**\-specific verification are defined in the Proof Specification. |
 | issuedAt | Y | integer | Issued Date. Unix timestamp (in seconds) when the attestation was issued. |
 | effectiveAt | N | integer | Effective Date. Optional Unix timestamp (in seconds) when the assessment becomes effective. |
@@ -312,6 +313,7 @@ A Key Binding attestation MUST conform to the following structure. The normative
 | publicKeyJwk | No | object | JWK of the keyId.  Includes the full public key, type, and curve. |
 | keyPurpose | Yes | \[string\] | A list of permitted uses for the key. |
 | revoked | No | boolean | Used if the transport does not support natively |
+| revokedAt | N | integer | Unix timestamp (in seconds) of the revocation |
 | proofs | Yes | \[object\] | At least one **Proof** object that uses **`proofPurpose`**`=shared-control` |
 | issuedAt | Yes | integer | Issued Date. Unix timestamp (in seconds) when the attestation was issued. |
 | effectiveAt | No | integer | Effective Date. Optional Unix timestamp (in seconds) when the assessment becomes effective. |
@@ -362,7 +364,7 @@ No additional Key Binding–specific proof types apply to direct proofs.
 
 #### 6.2.4.2 Evidence Pointer Proof Types
 
-Proofs MAY be used to bind a **`keyId`** through evidence hosted at a URL controlled by the Subject. This is done using the **`evidence-pointer proofType`**.
+Proofs MAY be used to bind a **`keyId`** through evidence hosted at a URL controlled by the Subject. This is done using the **`evidence-pointer`** **`proofType`**.
 
 Constraints:
 
@@ -972,7 +974,7 @@ If the metrics field is present it MUST have the following fields:
 | low | Yes | integer |  |
 | info | Yes | integer | Number of informational findings |
 
-7.5.3 Security Assessment Verification
+### 7.5.3 Security Assessment Verification
 
 Because the Security Assessment schema does not include Proof objects, verification is based on structural validity, lifecycle semantics, payload interpretation, and trusted-attester evaluation.
 
@@ -1003,19 +1005,134 @@ Clients and indexers verifying a Security Assessment MUST apply the following ru
 
 If rules (1)–(3) pass, the assessment is structurally valid and lifecycle-interpretable. Rules (4)–(7) govern how payload, evidence, and attester trust affect reputation scoring and filtering.
 
-8\. Utility Schemas
+## 7.6 Responsibility Claim Schema
+
+### 7.6.1 Purpose
+
+A Responsibility Claim attestation allows an identity (the **`responsibleParty`**), acting through an authorized signing key, to publicly accept one or more defined functional or operational responsibilities for a **`subject`** resource, service, or artifact. This schema provides the protocol's canonical mechanism for mapping abstract responsibilities to verifiable identities.
+
+Responsibility Claims occupy the same structural layer in the OMATrust verification pipeline as Key Bindings (§6.2). They establish a voluntary link between an actor and an object, which verifiers interpret through a two-phase process:
+
+Phase 1: Key Authorization: The verifier confirms that the **`attester`** is verifiably authorized to speak for the **`responsibleParty`** using the Support Attestations defined in Section 6\.
+
+Phase 2: Claim Interpretation: The verifier evaluates the claim’s lifecycle state, recognized responsibility types, and applicability to the subject DID.
+
+Responsibility Claims are voluntary declarations of intent or status; they are not cryptographic proofs of competence, quality, ownership, or legal liability. A claim of being a "maintainer" does not guarantee that security patches will be issued, only that the party has publicly identified themselves as responsible for doing so. Responsibility Claims identify who accepts responsibility, not whether that responsibility has been fulfilled.
+
+Clients MUST NOT treat a Responsibility Claim as an inherent endorsement of the party's capability. Instead, clients SHOULD combine these claims with other reputation signals, such as Certifications (§7.4), Security Assessments (§7.5), or local trust policies, to determine the overall trustworthiness of the claim and the claimant.
+
+### 7.6.2 Responsibility Claim Fields
+
+A Responsibility Claim attestation MUST conform to the normative JSON schema **`responsibility-claim.schema.json`** in the OMA3 Github Repository. The primary fields are:
+
+| Field | Req | Format | Description |
+| ----- | ----- | ----- | ----- |
+| attester | Yes | string | The DID of the entity making the assertion. This entity MUST be authorized to act for the **`responsibleParty`**. |
+| responsibleParty | Yes | string | The DID of the primary identity accepting responsibility. All authorization checks (Section 6\) anchor to this identifier. |
+| subject | Yes | string | The DID of the resource, service, or artifact for which responsibility is claimed. |
+| subjectLabel | No | string | A human-readable label or display name for the **`subject`** (128 characters max). |
+| responsibilityType | Yes | \[string\] | An array of responsibility types being claimed (e.g., creator, maintainer). Recognized values are managed via **`x-oma3-enum`**. |
+| issuedAt | Yes | integer | Unix timestamp (seconds) when the claim was issued. |
+| effectiveAt | No | integer | Unix timestamp (seconds) when the claim becomes active. |
+| expiresAt | No | integer | Unix timestamp (seconds) after which the claim is no longer valid. |
+| revoked | No | boolean | Indicates if this specific responsibility claim has been explicitly revoked. |
+| proofs | No | \[object\] | Optional array of Proof wrappers. While optional, they MAY provide additional contextual evidence, though authorization is primarily established through Section 6 Support Attestations. |
+
+The recognized values for **`responsibilityType`** are extensible.  The recognized values are maintained through **`x-oma3-enum`**. Clients MUST accept unrecognized values unless restricted by local policy. The currently recognized values are:
+
+| Value | Description |
+| ----- | ----- |
+| creator | Original author or maker of the subject. Asserts authorship. |
+| distributor | Responsible for delivering or distributing the subject through a channel. Covers publishing, mirroring, packaging, app store distribution, and CDN hosting. |
+| maintainer | Actively maintains the subject. Implies ongoing responsibility for updates, patches, and security fixes. |
+
+Responsibility Claims normally rely on the authorization relationships established by Support Attestations (Section 6). Additional **`proof`** objects are therefore uncommon and primarily intended to provide supplementary evidence rather than establish authority.
+
+### 7.6.3 Responsibility Claim Verification
+
+A Responsibility Claim is issued by an **`attester`** that MUST be verifiably authorized to act on behalf of the **`responsibleParty`**.
+
+The **`responsibleParty`**'s authorized key creates the attestation. The **`responsibilityType`** array lists all responsibilities being claimed.
+
+Clients and indexers evaluating a Responsibility Claim MUST apply the following verification steps in order:
+
+1. Verify Authorization: Confirm the **`attester`** is authorized to act for the **`responsibleParty`** using Section 6 Support Attestations.  
+2. Verify Lifecycle: Check that the current time is within **`effectiveAt`** and **`expiresAt`** bounds, and that **`revoked`** is not true. If **`effectiveAt`** is absent, clients MUST treat **`issuedAt`** as the effective time.  
+3. Verify Responsibility Types: Ensure the values in **`responsibilityType`** are recognized by the client or listed in the schema's **`x-oma3-enum`**.  
+4. Verify Subject DID: Confirm that the **`subject`** DID method is appropriate for the claimed responsibility (e.g., **`did:artifact`** for software). Recommended methods are defined via **`x-oma3-did-methods`** in the JSON schema.  
+5. Apply Local Policy: Determine the trustworthiness of the claim based on the identity of the **`responsibleParty`** and any supporting attestations (e.g., Certifications).
+
+If the above verification steps succeed, the Responsibility Claim establishes that an authorized identity accepted the specified responsibilities for the **`subject`** during the claim's active lifecycle. It does not establish that those responsibilities were successfully performed.
+
+#### 7.6.3.1 Revocation
+
+A claim ceases to be active if the **`revoked`** field is set to **`true`** or if the current time exceeds the **`expiresAt`** timestamp. Revocation and expiration invalidate the authorization of the claim for future actions but do not delete the historical record of the claim's existence.
+
+#### 7.6.3.2 Responsibility Modification
+
+Responsibility Claims are immutable. Partial revocation is not supported. To change the set of responsibilities (e.g., adding or removing a role), the **`responsibleParty`** MUST revoke the existing attestation and issue a new one with the updated **`responsibilityType`** array.
+
+### 7.6.4 Examples
+
+Company publishing a software artifact:
+
+```json
+{
+  "attester": "0x1234...abcd",
+  "responsibleParty": "did:web:acme.com",
+  "subject": "did:artifact:bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+  "responsibilityType": [
+    "creator",
+    "distributor",
+    "maintainer"
+  ],
+  "issuedAt": 1720000000
+}
+```
+
+Developer maintaining open-source software:
+
+```json
+{
+  "attester": "0xabcd...1234",
+  "responsibleParty": "did:pkh:eip155:1:0xabcd...1234",
+  "subject": "did:artifact:bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenera28e",
+  "responsibilityType": [
+    "maintainer"
+  ],
+  "issuedAt": 1720000000
+}
+```
+
+Game studio distributing a title:
+
+```json
+{
+  "attester": "0x5678...efgh",
+  "responsibleParty": "did:web:gamestudio.io",
+  "subject": "did:web:gamestudio.io:games:space-quest",
+  "responsibilityType": [
+    "creator",
+    "distributor"
+  ],
+  "issuedAt": 1720000000,
+  "expiresAt": 1751536000
+}
+```
+
+# 8\. Utility Schemas
 
 This section defines reusable utility structures that appear across multiple attestation types. Utility schemas are not primary reputation attestations on their own; they provide shared field patterns and interpretation rules used by attestations in §§6–7.
 
 The utilities in this section are non-proof structures. Proof objects are also reusable utilities attached to attestations, not attestations on their own, but they are defined in the OMATrust Proof Specification. 
 
-8.1 Payload Container
+## 8.1 Payload Container
 
 Many OMATrust attestations include a **`payload`** field to carry attestation-specific details that are expected to evolve over time. Payloads are intentionally flexible to avoid frequent structural schema updates.
 
 **`payload`** is a JSON object whose internal fields are attestation specific. Unless a payload specification is referenced via **`payloadSpecURI`**, clients MUST treat payload contents as opaque data that MAY be ignored for trust/scoring purposes.
 
-8.1.1 Default and Custom Payloads
+### 8.1.1 Default and Custom Payloads
 
 Payload interpretation follows a default/override model:
 
@@ -1026,7 +1143,7 @@ Clients MAY classify payloads that omit **`payloadSpecURI`** as “default-schem
 
 If the client cannot resolve or recognize a referenced spec, the client MUST still treat the attestation envelope as valid, but MAY ignore payload contents for trust/scoring purposes.
 
-8.1.2 Payload Metadata Fields
+### 8.1.2 Payload Metadata Fields
 
 Payload metadata fields describe the structure, versioning, and integrity of payloads. These fields are shared utilities referenced by multiple attestation schemas.  They are defined in the **`common.schema.json`** file.
 
@@ -1050,27 +1167,27 @@ Verification:
 * If both **`payloadSpecURI`** and **`payloadSpecDigest`** are present, clients SHOULD fetch the spec and verify its digest.  
 * If digest verification fails, clients MUST treat the referenced spec as invalid and MAY fall back to default-schema interpretation or treat **`payload`** as opaque.
 
-9\. Schema Publication and Versioning
+# 9\. Schema Publication and Versioning
 
 This section defines where OMATrust normative JSON schemas are published, how schema versions are managed over time, how clients resolve schema UIDs to specific schema versions, and how to interpret OMA3-specific schema annotations (**`x-oma3-*`**). These rules ensure that attestations remain structurally stable and machine-validated across releases, while allowing the specification’s semantic guidance to evolve independently.
 
-9.1 Payload Container
+## 9.1 Payload Container
 
 Normative JSON schemas for all Support and Reputation attestations are published in the OMA3 schema repository on GitHub. Implementations MUST validate attestations against the schemas in that repository, as pinned by a tagged schema-set release.
 
-9.1.1 Tagged schema-set releases
+### 9.1.1 Tagged schema-set releases
 
 Schemas MUST be referenced by immutable tagged releases (e.g., **`schemas/vx.y.z/`**). Mutable branches (including main) are not normative unless explicitly bound to a tagged release. A tagged schema-set release represents the authoritative structural definitions for a specific OMATrust specification version.
 
-9.1.2 Spec ↔ schema-set mapping
+### 9.1.2 Spec ↔ schema-set mapping
 
 Each OMATrust specification version maps to exactly one schema-set tag. References in §§6–7 to “the normative schema” mean the schema file contained in the schema-set tag corresponding to this specification version.
 
-9.1.3 Immutability expectation
+### 9.1.3 Immutability expectation
 
 Structural changes to any schema require registering a new schema with the underlying attestation framework, producing a new schema UID. Because schema UID changes impose real client migration costs, schemas are expected to evolve infrequently compared to this specification text. Semantic or verification changes that do not alter structure SHOULD NOT require schema changes.
 
-9.1.4 Schema-set structure
+### 9.1.4 Schema-set structure
 
 Each schema-set release SHOULD be stored in a versioned folder (e.g., **`schemas/vx.y.z/`**) containing:
 
@@ -1078,11 +1195,11 @@ Each schema-set release SHOULD be stored in a versioned folder (e.g., **`schemas
 * the pinned Common JSON Schema for that release, and  
 * a registry file as defined in §9.2.
 
-9.1.5 Backward compatibility
+### 9.1.5 Backward compatibility
 
 Clients MUST NOT assume a single active schema UID for a given attestation type. Clients SHOULD support the set of schema UIDs published in the registry for this spec version and MAY additionally support older UIDs according to local policy.
 
-9.2 Schema UID Registry
+## 9.2 Schema UID Registry
 
 Because attestations are often identified by schema UID, each schema-set release MUST publish a machine-readable registry file that maps schema UIDs to their structural definitions.
 
@@ -1101,7 +1218,7 @@ Clients MUST rely on the registry to resolve a schema UID to a specific schema v
 
 Within a tagged schema-set release, the registry is immutable. Any change to a published registry requires a new schema-set version and tag.
 
-9.3 x-oma3 Schema Annotation Semantics
+## 9.3 x-oma3 Schema Annotation Semantics
 
 Schemas in the OMA3 repository may include OMATrust-specific JSON Schema extension fields prefixed with **`x-oma3-`**. These extensions are not part of normative structural validation; standard JSON Schema validators MUST ignore them.
 
@@ -1121,7 +1238,7 @@ Indicates that a field MAY be automatically populated with a default value by an
 
 Auto-population MUST NOT override any explicit value provided by the Attester.
 
-9.3.2 x-oma3-did-methods
+### 9.3.2 x-oma3-did-methods
 
 An array of DID method strings that provide hints about which DID methods are recommended or expected for a DID-formatted field. Intended for UI guidance and method support signaling (a front end can provide a drop down of DID methods).  
 
@@ -1194,6 +1311,7 @@ Notes:
 | 0.1 | 2025-09-25 | Initial draft \- Alfred Tom |
 | 0.2 | 2025-12-10 | First complete draft- Alfred Tom |
 | 0.3 | 2026-02-10 | Add Controller Witness attestation.  Invalidate Linked Identifier and Key Binding attestations that are not revocable. |
+| 0.4 | 2026-07-11 | Add Responsibility Claim attestation and revokedAt.  Fix formatting. |
 
 # Appendix A
 
