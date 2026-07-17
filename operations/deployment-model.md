@@ -6,9 +6,9 @@ Policy and principles for deploying OMATrust systems. This document defines the 
 - [deployment-rep-attestation.md](./deployment-rep-attestation.md) — OMATrust portal (https://app.omatrust.org)
 
 **Smart contract deployment and admin operations:**
-- [app-registry-evm-solidity/tasks/deploy/README.md](../../app-registry-evm-solidity/tasks/deploy/README.md) — All contract deployment (Hardhat/Solidity)
-- [oma3-ops/README.md](../../oma3-ops/README.md) — Ongoing on-chain admin operations
-- [oma3-ops/docs/funding-omachain-wallets.md](../../oma3-ops/docs/funding-omachain-wallets.md) — Wallet funding and bridging
+- [app-registry-evm-solidity/tasks/deploy/README.md](https://github.com/oma3dao/app-registry-evm-solidity/blob/main/tasks/deploy/README.md) — All contract deployment (Hardhat/Solidity)
+- [oma3-ops/README.md](https://github.com/oma3dao/oma3-ops/blob/main/README.md) — Ongoing on-chain admin operations
+- [oma3-ops/docs/funding-omachain-wallets.md](https://github.com/oma3dao/oma3-ops/blob/main/docs/funding-omachain-wallets.md) — Wallet funding and bridging
 
 ---
 
