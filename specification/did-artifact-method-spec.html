@@ -280,6 +280,13 @@ base32-lower   = %x61-7A / %x32-37          ; "a"-"z" and "2"-"7"
       <li>Encoding the canonical form as UTF-8 octets.</li>
     </ol>
     <p>
+      The canonical octets cover the entire canonicalized document. No member is added,
+      removed, or replaced before hashing, whatever its name or value; a member whose value is
+      a <code>did:artifact</code> string is ordinary data and is hashed like any other. Some
+      digest and signature schemes exclude a designated member from their preimage; this method
+      defines no such exclusion.
+    </p>
+    <p>
       Producers SHOULD avoid IEEE 754 floating-point numbers in artifacts whose identity must
       be stable across runtimes; where precise numeric values are required they SHOULD be
       represented as strings or as integers. Producers that embed timestamps or other
@@ -295,18 +302,6 @@ base32-lower   = %x61-7A / %x32-37          ; "a"-"z" and "2"-"7"
         different DIDs; the referencing context declares which intent applies.
       </p>
     </aside>
-
-    <section>
-      <h4>Self-reference prohibition</h4>
-      <p>
-        When the artifact is a JSON document, its <code>did:artifact</code> value MUST NOT
-        appear as a member of the object being hashed. Including the identifier inside the
-        hashed octets creates a circular dependency, since the identifier would depend on a
-        field that depends on the identifier. The identifier MUST instead be recorded
-        externally to the document (for example in a distribution record, registry entry,
-        package lockfile, deployment configuration, or attestation).
-      </p>
-    </section>
   </section>
 
   <section>
@@ -638,11 +633,6 @@ base32-lower   = %x61-7A / %x32-37          ; "a"-"z" and "2"-"7"
       artifact's safety, provenance, or fitness. Such properties are conveyed solely by
       external attestations referencing the DID, and consumers MUST evaluate those
       attestations under their own trust policy.
-    </li>
-    <li>
-      <strong>Self-reference.</strong> Embedding a JSON artifact's own identifier inside the
-      hashed object is prohibited; implementations that ignore this will produce
-      non-reproducible identifiers.
     </li>
   </ul>
 </section>
