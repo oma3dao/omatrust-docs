@@ -289,7 +289,9 @@ If these conditions are not met, a Handle-Link Statement evidence artifact MUST 
 ### 6.1.5 Linked Identifier Revocation
 
 * Linked Identifier attestations represent claims of active control and therefore MUST be revocable.  
-* Clients MUST reject any attestation that is not revocable, regardless of how revocability is expressed or enforced by the underlying transport or schema registration.
+* Clients MUST reject any attestation that is not revocable, regardless of how revocability is expressed or enforced by the underlying transport or schema registration.  
+* When **`revoked`** is **`true`**, the attestation is inactive. The optional **`revokedAt`** field records the Unix timestamp (seconds) at which the revocation took effect. When present, **`revokedAt`** is authoritative for the revocation effective time; when absent, clients MUST treat revocation as effective from the time the revocation was issued on the underlying transport.  
+* **`revokedAt`** has no effect unless **`revoked`** is **`true`**, and clients MUST ignore it in that case. Clients MAY use **`revokedAt`** for temporal-ordering analysis (e.g., §6.3.4.1) to determine whether the attestation was active at a given point in time.
 
 ## 6.2 Key Binding
 
@@ -421,7 +423,8 @@ Revocation provides an explicit mechanism to deactivate a key, independent of ex
 * If the revoked field is **`true`**, the binding MUST be considered inactive regardless of the value of **`expiresAt`**.  
 * A revoked binding MUST NOT be used to authorize signatures, perform verification relationships, or fulfill the actions defined in **`keyPurpose`**.  
 * Revocation does not delete or override the historical Key Binding attestation; it only indicates its current lifecycle state.   
-* Revocation is effective from the timestamp at which the revocation attestation is issued.  
+* Revocation is effective from the timestamp at which the revocation attestation is issued. The optional **`revokedAt`** field records the Unix timestamp (seconds) at which the revocation took effect. When present, **`revokedAt`** is authoritative for the revocation effective time and overrides the default above; when absent, the default revocation issuance time applies.  
+* **`revokedAt`** has no effect unless **`revoked`** is **`true`**, and clients MUST ignore it in that case. Clients MAY use **`revokedAt`** for temporal-ordering analysis (e.g., §6.3.4.1) to determine whether the binding was active at a given point in time.  
 * Key Binding attestations represent claims of active control and therefore MUST be revocable.  
 * Clients MUST reject any attestation this is not revocable, regardless of schema-level settings.
 
@@ -1036,6 +1039,7 @@ A Responsibility Claim attestation MUST conform to the normative JSON schema **`
 | effectiveAt | No | integer | Unix timestamp (seconds) when the claim becomes active. |
 | expiresAt | No | integer | Unix timestamp (seconds) after which the claim is no longer valid. |
 | revoked | No | boolean | Indicates if this specific responsibility claim has been explicitly revoked. |
+| revokedAt | No | integer | Unix timestamp (in seconds) of the revocation. Has no effect unless **`revoked`** is **`true`**. |
 | proofs | No | \[object\] | Optional array of Proof wrappers. While optional, they MAY provide additional contextual evidence, though authorization is primarily established through Section 6 Support Attestations. |
 
 The recognized values for **`responsibilityType`** are extensible.  The recognized values are maintained through **`x-oma3-enum`**. Clients MUST accept unrecognized values unless restricted by local policy. The currently recognized values are:
@@ -1059,7 +1063,7 @@ Clients and indexers evaluating a Responsibility Claim MUST apply the following 
 1. Verify Authorization: Confirm the **`attester`** is authorized to act for the **`responsibleParty`** using Section 6 Support Attestations.  
 2. Verify Lifecycle: Check that the current time is within **`effectiveAt`** and **`expiresAt`** bounds, and that **`revoked`** is not true. If **`effectiveAt`** is absent, clients MUST treat **`issuedAt`** as the effective time.  
 3. Verify Responsibility Types: Ensure the values in **`responsibilityType`** are recognized by the client or listed in the schema's **`x-oma3-enum`**.  
-4. Verify Subject DID: Confirm that the **`subject`** DID method is appropriate for the claimed responsibility (e.g., **`did:artifact`** for software). Recommended methods are defined via **`x-oma3-did-methods`** in the JSON schema.  
+4. Verify Subject DID: Confirm that the **`subject`** DID method is appropriate for the claimed responsibility (e.g., **`did:artifact`** for software, as defined in the [OMATrust Identity Specification](https://github.com/oma3dao/omatrust-docs/blob/main/specification/omatrust-specification.md)). Recommended methods are defined via **`x-oma3-did-methods`** in the JSON schema.  
 5. Apply Local Policy: Determine the trustworthiness of the claim based on the identity of the **`responsibleParty`** and any supporting attestations (e.g., Certifications).
 
 If the above verification steps succeed, the Responsibility Claim establishes that an authorized identity accepted the specified responsibilities for the **`subject`** during the claim's active lifecycle. It does not establish that those responsibilities were successfully performed.
@@ -1067,6 +1071,10 @@ If the above verification steps succeed, the Responsibility Claim establishes th
 #### 7.6.3.1 Revocation
 
 A claim ceases to be active if the **`revoked`** field is set to **`true`** or if the current time exceeds the **`expiresAt`** timestamp. Revocation and expiration invalidate the authorization of the claim for future actions but do not delete the historical record of the claim's existence.
+
+The optional **`revokedAt`** field records the Unix timestamp (seconds) at which the revocation took effect. When present, **`revokedAt`** is authoritative for the revocation effective time; when absent, clients MUST treat revocation as effective from the time the revocation was issued on the underlying transport. **`revokedAt`** has no effect unless **`revoked`** is **`true`**, and clients MUST ignore it in that case.
+
+Unlike the active-control attestations in §6.1 and §6.2, Responsibility Claims are voluntary reputation signals rather than claims of active control. The requirement in §6.1.5 and §6.2.5.4 that clients reject non-revocable attestations therefore does not apply to Responsibility Claims. A Responsibility Claim MAY be non-revocable (e.g., a permanent record of `creator` authorship); clients MUST still honor the **`revoked`** and **`expiresAt`** lifecycle fields when present.
 
 #### 7.6.3.2 Responsibility Modification
 
@@ -1078,7 +1086,7 @@ Company publishing a software artifact:
 
 ```json
 {
-  "attester": "0x1234...abcd",
+  "attester": "did:pkh:eip155:1:0x1234...abcd",
   "responsibleParty": "did:web:acme.com",
   "subject": "did:artifact:bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
   "responsibilityType": [
@@ -1094,7 +1102,7 @@ Developer maintaining open-source software:
 
 ```json
 {
-  "attester": "0xabcd...1234",
+  "attester": "did:pkh:eip155:1:0xabcd...1234",
   "responsibleParty": "did:pkh:eip155:1:0xabcd...1234",
   "subject": "did:artifact:bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenera28e",
   "responsibilityType": [
@@ -1108,7 +1116,7 @@ Game studio distributing a title:
 
 ```json
 {
-  "attester": "0x5678...efgh",
+  "attester": "did:pkh:eip155:1:0x5678...cdef",
   "responsibleParty": "did:web:gamestudio.io",
   "subject": "did:web:gamestudio.io:games:space-quest",
   "responsibilityType": [
